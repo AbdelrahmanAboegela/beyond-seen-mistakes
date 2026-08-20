@@ -1,0 +1,132 @@
+{
+  "method": "FACT",
+  "exercise": "squat",
+  "target": "100001",
+  "seed": 42,
+  "features": "j",
+  "soft_mask": true,
+  "use_proto": true,
+  "global_mask": false,
+  "shared_adapter": false,
+  "n_params": 84858,
+  "n_train": 180,
+  "n_val": 50,
+  "n_test": 52,
+  "split_audit": {
+    "target": "100001",
+    "seed": 42,
+    "split_offset": 53,
+    "target_groups": [
+      "1",
+      "105",
+      "107",
+      "109",
+      "11",
+      "111",
+      "13",
+      "31",
+      "33",
+      "53",
+      "57",
+      "61",
+      "63"
+    ],
+    "n_train": 180,
+    "n_val": 50,
+    "n_test": 52,
+    "train_state_counts": [
+      [
+        115,
+        65
+      ],
+      [
+        145,
+        35
+      ],
+      [
+        140,
+        40
+      ],
+      [
+        91,
+        89
+      ],
+      [
+        170,
+        10
+      ],
+      [
+        40,
+        140
+      ]
+    ],
+    "val_state_counts": [
+      [
+        30,
+        20
+      ],
+      [
+        34,
+        16
+      ],
+      [
+        40,
+        10
+      ],
+      [
+        25,
+        25
+      ],
+      [
+        40,
+        10
+      ],
+      [
+        11,
+        39
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.665012607531789,
+    "micro_f1": 0.7215686274509804,
+    "bit_accuracy": 0.7633333333333333,
+    "exact_match": 0.14,
+    "per_criterion_accuracy": [
+      0.62,
+      0.78,
+      0.9,
+      0.76,
+      0.7,
+      0.82
+    ]
+  },
+  "test": {
+    "macro_f1": 0.2590990990990991,
+    "micro_f1": 0.5907172995780591,
+    "bit_accuracy": 0.6891025641025641,
+    "exact_match": 0.21153846153846154,
+    "per_criterion_accuracy": [
+      0.4230769230769231,
+      0.75,
+      0.7692307692307693,
+      0.5384615384615384,
+      0.7307692307692307,
+      0.9230769230769231
+    ]
+  },
+  "epochs": 37,
+  "train_seconds": 11.675194501876831,
+  "hyper": {
+    "lr": 0.0015,
+    "lam_proto": 0.0,
+    "lam_supcon": 0.0,
+    "lam_h1": 0.0,
+    "context_alpha": 0.0
+  }
+}

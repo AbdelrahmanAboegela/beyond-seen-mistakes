@@ -1,0 +1,120 @@
+{
+  "exercise": "squat",
+  "target": "101001",
+  "seed": 42,
+  "model": "tcn",
+  "criteria": [
+    "Feet Out 30 F",
+    "Whole Feet Flat On the Floor (1) L",
+    "Bend Hips and Knees Simultaniously (1) L",
+    "Hips backwards (1) L",
+    "Lower back neural (1) L",
+    "Hips are lower than knees level (1 point) L"
+  ],
+  "n_train": 214,
+  "n_val": 55,
+  "n_test": 25,
+  "n_params": 112530,
+  "split_audit": {
+    "target": "101001",
+    "seed": 42,
+    "split_offset": 14,
+    "target_groups": [
+      "113",
+      "117",
+      "19",
+      "55",
+      "83"
+    ],
+    "n_train": 214,
+    "n_val": 55,
+    "n_test": 25,
+    "train_state_counts": [
+      [
+        126,
+        88
+      ],
+      [
+        183,
+        31
+      ],
+      [
+        199,
+        15
+      ],
+      [
+        130,
+        84
+      ],
+      [
+        204,
+        10
+      ],
+      [
+        39,
+        175
+      ]
+    ],
+    "val_state_counts": [
+      [
+        26,
+        29
+      ],
+      [
+        30,
+        25
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        25,
+        30
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        12,
+        43
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.4916121922458241,
+    "micro_f1": 0.6170212765957447,
+    "bit_accuracy": 0.6727272727272727,
+    "exact_match": 0.21818181818181817,
+    "per_criterion_accuracy": [
+      0.6363636363636364,
+      0.5454545454545454,
+      0.7636363636363637,
+      0.5636363636363636,
+      0.8,
+      0.7272727272727273
+    ]
+  },
+  "test": {
+    "macro_f1": 0.3255178087495161,
+    "micro_f1": 0.6363636363636364,
+    "bit_accuracy": 0.68,
+    "exact_match": 0.04,
+    "per_criterion_accuracy": [
+      0.64,
+      0.72,
+      0.12,
+      0.76,
+      0.92,
+      0.92
+    ]
+  },
+  "epochs": 24,
+  "train_seconds": 1.917423963546753
+}

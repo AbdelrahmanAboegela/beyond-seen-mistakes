@@ -1,0 +1,120 @@
+{
+  "exercise": "squat",
+  "target": "101001",
+  "seed": 42,
+  "model": "gru",
+  "criteria": [
+    "Feet Out 30 F",
+    "Whole Feet Flat On the Floor (1) L",
+    "Bend Hips and Knees Simultaniously (1) L",
+    "Hips backwards (1) L",
+    "Lower back neural (1) L",
+    "Hips are lower than knees level (1 point) L"
+  ],
+  "n_train": 214,
+  "n_val": 55,
+  "n_test": 25,
+  "n_params": 99042,
+  "split_audit": {
+    "target": "101001",
+    "seed": 42,
+    "split_offset": 14,
+    "target_groups": [
+      "113",
+      "117",
+      "19",
+      "55",
+      "83"
+    ],
+    "n_train": 214,
+    "n_val": 55,
+    "n_test": 25,
+    "train_state_counts": [
+      [
+        126,
+        88
+      ],
+      [
+        183,
+        31
+      ],
+      [
+        199,
+        15
+      ],
+      [
+        130,
+        84
+      ],
+      [
+        204,
+        10
+      ],
+      [
+        39,
+        175
+      ]
+    ],
+    "val_state_counts": [
+      [
+        26,
+        29
+      ],
+      [
+        30,
+        25
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        25,
+        30
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        12,
+        43
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.5468014538845979,
+    "micro_f1": 0.6776315789473685,
+    "bit_accuracy": 0.703030303030303,
+    "exact_match": 0.07272727272727272,
+    "per_criterion_accuracy": [
+      0.8181818181818182,
+      0.6,
+      0.8545454545454545,
+      0.32727272727272727,
+      0.7818181818181819,
+      0.8363636363636363
+    ]
+  },
+  "test": {
+    "macro_f1": 0.33851447555766495,
+    "micro_f1": 0.6164383561643836,
+    "bit_accuracy": 0.6266666666666667,
+    "exact_match": 0.04,
+    "per_criterion_accuracy": [
+      0.72,
+      0.72,
+      0.12,
+      0.24,
+      1.0,
+      0.96
+    ]
+  },
+  "epochs": 31,
+  "train_seconds": 4.561321973800659
+}

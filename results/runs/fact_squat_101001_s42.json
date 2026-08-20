@@ -1,0 +1,124 @@
+{
+  "method": "FACT",
+  "exercise": "squat",
+  "target": "101001",
+  "seed": 42,
+  "features": "j",
+  "soft_mask": true,
+  "use_proto": true,
+  "global_mask": false,
+  "shared_adapter": false,
+  "n_params": 84858,
+  "n_train": 214,
+  "n_val": 55,
+  "n_test": 25,
+  "split_audit": {
+    "target": "101001",
+    "seed": 42,
+    "split_offset": 14,
+    "target_groups": [
+      "113",
+      "117",
+      "19",
+      "55",
+      "83"
+    ],
+    "n_train": 214,
+    "n_val": 55,
+    "n_test": 25,
+    "train_state_counts": [
+      [
+        126,
+        88
+      ],
+      [
+        183,
+        31
+      ],
+      [
+        199,
+        15
+      ],
+      [
+        130,
+        84
+      ],
+      [
+        204,
+        10
+      ],
+      [
+        39,
+        175
+      ]
+    ],
+    "val_state_counts": [
+      [
+        26,
+        29
+      ],
+      [
+        30,
+        25
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        25,
+        30
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        12,
+        43
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.6340297652733985,
+    "micro_f1": 0.6947368421052632,
+    "bit_accuracy": 0.7363636363636363,
+    "exact_match": 0.07272727272727272,
+    "per_criterion_accuracy": [
+      0.7090909090909091,
+      0.7272727272727273,
+      0.8,
+      0.6,
+      0.8909090909090909,
+      0.6909090909090909
+    ]
+  },
+  "test": {
+    "macro_f1": 0.39189691027926327,
+    "micro_f1": 0.6496815286624203,
+    "bit_accuracy": 0.6333333333333333,
+    "exact_match": 0.04,
+    "per_criterion_accuracy": [
+      0.92,
+      0.56,
+      0.36,
+      0.28,
+      0.92,
+      0.76
+    ]
+  },
+  "epochs": 19,
+  "train_seconds": 7.186223745346069,
+  "hyper": {
+    "lr": 0.0015,
+    "lam_proto": 0.0,
+    "lam_supcon": 0.0,
+    "lam_h1": 0.0,
+    "context_alpha": 0.0
+  }
+}

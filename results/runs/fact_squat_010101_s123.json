@@ -1,0 +1,123 @@
+{
+  "method": "FACT",
+  "exercise": "squat",
+  "target": "010101",
+  "seed": 123,
+  "features": "j",
+  "soft_mask": true,
+  "use_proto": true,
+  "global_mask": false,
+  "shared_adapter": false,
+  "n_params": 84858,
+  "n_train": 219,
+  "n_val": 55,
+  "n_test": 15,
+  "split_audit": {
+    "target": "010101",
+    "seed": 123,
+    "split_offset": 66,
+    "target_groups": [
+      "87",
+      "95",
+      "97",
+      "99"
+    ],
+    "n_train": 219,
+    "n_val": 55,
+    "n_test": 15,
+    "train_state_counts": [
+      [
+        103,
+        116
+      ],
+      [
+        188,
+        31
+      ],
+      [
+        184,
+        35
+      ],
+      [
+        140,
+        79
+      ],
+      [
+        209,
+        10
+      ],
+      [
+        34,
+        185
+      ]
+    ],
+    "val_state_counts": [
+      [
+        30,
+        25
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        40,
+        15
+      ],
+      [
+        40,
+        15
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        17,
+        38
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.6080628587256258,
+    "micro_f1": 0.6614173228346457,
+    "bit_accuracy": 0.7393939393939394,
+    "exact_match": 0.3090909090909091,
+    "per_criterion_accuracy": [
+      0.5818181818181818,
+      0.7818181818181819,
+      0.8,
+      0.7818181818181819,
+      0.8545454545454545,
+      0.6363636363636364
+    ]
+  },
+  "test": {
+    "macro_f1": 0.3201754385964912,
+    "micro_f1": 0.5925925925925926,
+    "bit_accuracy": 0.6333333333333333,
+    "exact_match": 0.2,
+    "per_criterion_accuracy": [
+      0.2,
+      0.26666666666666666,
+      1.0,
+      0.3333333333333333,
+      1.0,
+      1.0
+    ]
+  },
+  "epochs": 49,
+  "train_seconds": 17.784000396728516,
+  "hyper": {
+    "lr": 0.0015,
+    "lam_proto": 0.0,
+    "lam_supcon": 0.0,
+    "lam_h1": 0.0,
+    "context_alpha": 0.0
+  }
+}

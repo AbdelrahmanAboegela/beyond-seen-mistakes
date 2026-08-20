@@ -1,0 +1,32 @@
+{
+  "seeds": [7, 42, 123],
+  "frames": 16,
+  "default_support_rule": {"min_target_repetitions": 10, "min_source_groups": 3, "min_training_examples_per_criterion_state": 8},
+  "relaxed_support_rule": {"min_target_repetitions": 8, "min_source_groups": 2, "min_training_examples_per_criterion_state": 5},
+  "strict_support_rule": {"min_target_repetitions": 15, "min_source_groups": 4, "min_training_examples_per_criterion_state": 10},
+  "default_targets": {
+    "squat": ["000000", "000001", "000101", "010101", "100001", "100101", "101001"],
+    "deadlift": ["00000", "00010", "00100", "00110", "11110"],
+    "lunges": []
+  },
+  "fact": {
+    "name": "Factorized Anatomical Criterion Tokens",
+    "features": "j",
+    "soft_anatomical_mask": true,
+    "criterion_specific_adapters": true,
+    "prototype_decoder": true,
+    "view_routing": "annotation_aligned",
+    "lambda_prototype_pull": 0.0,
+    "lambda_supervised_contrastive": 0.0,
+    "lambda_hamming1": 0.0,
+    "context_alpha": 0.0,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0015,
+    "weight_decay": 0.0002,
+    "batch_size": 32,
+    "max_epochs": 55,
+    "patience": 9,
+    "early_stopping_metric": "validation macro-F1",
+    "split_protocol": "v2 constrained recording-pair-disjoint split; every train and validation fold contains both states for each criterion"
+  }
+}

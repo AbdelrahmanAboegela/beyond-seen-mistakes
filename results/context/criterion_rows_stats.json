@@ -1,0 +1,134 @@
+{
+  "criterion_level": [
+    {
+      "model": "fact",
+      "perturbation": "temporal_mean",
+      "n": 67,
+      "pressure_vs_accuracy_rho": -0.5229712691661859,
+      "pressure_vs_accuracy_p": 5.6195269844623e-06,
+      "evidence_vs_accuracy_rho": 0.3531325159165107,
+      "evidence_vs_accuracy_p": 0.0033767061186933244,
+      "pressure_vs_evidence_rho": -0.11495499980623365,
+      "pressure_vs_evidence_p": 0.3542821469612706,
+      "blocked_pressure_accuracy": {
+        "mean_within_target_rho": -0.6480561755588599,
+        "p_one_sided": 1.999960000799984e-05,
+        "n_permutations": 50000,
+        "null_mean": 0.00012457005449100856,
+        "n_informative_targets": 12
+      },
+      "blocked_evidence_accuracy": {
+        "mean_within_target_rho": 0.38709822196214394,
+        "p_one_sided": 0.0018999620007599848,
+        "n_permutations": 50000,
+        "null_mean": -0.0006474062983211912,
+        "n_informative_targets": 12
+      }
+    },
+    {
+      "model": "fact",
+      "perturbation": "zero",
+      "n": 67,
+      "pressure_vs_accuracy_rho": -0.5229712691661859,
+      "pressure_vs_accuracy_p": 5.6195269844623e-06,
+      "evidence_vs_accuracy_rho": 0.19847739620849994,
+      "evidence_vs_accuracy_p": 0.10737667326063355,
+      "pressure_vs_evidence_rho": 0.033494377618292756,
+      "pressure_vs_evidence_p": 0.7878686478670296,
+      "blocked_pressure_accuracy": {
+        "mean_within_target_rho": -0.6480561755588599,
+        "p_one_sided": 1.999960000799984e-05,
+        "n_permutations": 50000,
+        "null_mean": 0.00012457005449100856,
+        "n_informative_targets": 12
+      },
+      "blocked_evidence_accuracy": {
+        "mean_within_target_rho": 0.26802647771402976,
+        "p_one_sided": 0.024219515609687808,
+        "n_permutations": 50000,
+        "null_mean": 0.0006539454629252854,
+        "n_informative_targets": 12
+      }
+    },
+    {
+      "model": "tcn",
+      "perturbation": "temporal_mean",
+      "n": 67,
+      "pressure_vs_accuracy_rho": -0.47443774227811164,
+      "pressure_vs_accuracy_p": 4.9914895490457174e-05,
+      "evidence_vs_accuracy_rho": -0.031768520905620504,
+      "evidence_vs_accuracy_p": 0.7985629715325324,
+      "pressure_vs_evidence_rho": 0.17476931675248716,
+      "pressure_vs_evidence_p": 0.15720342092176492,
+      "blocked_pressure_accuracy": {
+        "mean_within_target_rho": -0.5693363428911007,
+        "p_one_sided": 1.999960000799984e-05,
+        "n_permutations": 50000,
+        "null_mean": 2.5964277099881378e-05,
+        "n_informative_targets": 12
+      },
+      "blocked_evidence_accuracy": {
+        "mean_within_target_rho": 0.02360096220392689,
+        "p_one_sided": 0.42913141737165256,
+        "n_permutations": 50000,
+        "null_mean": -0.000681282978806167,
+        "n_informative_targets": 12
+      }
+    },
+    {
+      "model": "tcn",
+      "perturbation": "zero",
+      "n": 67,
+      "pressure_vs_accuracy_rho": -0.47443774227811164,
+      "pressure_vs_accuracy_p": 4.9914895490457174e-05,
+      "evidence_vs_accuracy_rho": -0.15888251473024526,
+      "evidence_vs_accuracy_p": 0.1990683921089161,
+      "pressure_vs_evidence_rho": 0.22207961267844784,
+      "pressure_vs_evidence_p": 0.07088416961774445,
+      "blocked_pressure_accuracy": {
+        "mean_within_target_rho": -0.5693363428911007,
+        "p_one_sided": 1.999960000799984e-05,
+        "n_permutations": 50000,
+        "null_mean": 2.5964277099881378e-05,
+        "n_informative_targets": 12
+      },
+      "blocked_evidence_accuracy": {
+        "mean_within_target_rho": -0.10276331532454674,
+        "p_one_sided": 0.2250554988900222,
+        "n_permutations": 50000,
+        "null_mean": -2.357659853833127e-05,
+        "n_informative_targets": 12
+      }
+    }
+  ],
+  "paired_fact_minus_tcn": [
+    {
+      "perturbation": "temporal_mean",
+      "metric": "baseline_accuracy",
+      "n": 67,
+      "mean_difference": 0.018339423947317985,
+      "wilcoxon_two_sided": 0.5058750881907499
+    },
+    {
+      "perturbation": "temporal_mean",
+      "metric": "relative_evidence_sensitivity",
+      "n": 67,
+      "mean_difference": 0.016931276865160078,
+      "wilcoxon_two_sided": 0.1387518488458668
+    },
+    {
+      "perturbation": "zero",
+      "metric": "baseline_accuracy",
+      "n": 67,
+      "mean_difference": 0.018339423947317985,
+      "wilcoxon_two_sided": 0.5058750881907499
+    },
+    {
+      "perturbation": "zero",
+      "metric": "relative_evidence_sensitivity",
+      "n": 67,
+      "mean_difference": 0.005402605948924547,
+      "wilcoxon_two_sided": 0.9005766598111851
+    }
+  ]
+}

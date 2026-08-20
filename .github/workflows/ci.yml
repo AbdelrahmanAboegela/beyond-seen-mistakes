@@ -1,0 +1,20 @@
+name: artifact-integrity
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python scripts/verify_release.py
+      - run: python src/analyze_research_questions.py --out build/rq_stats.json
+      - run: python scripts/generate_figures.py
+

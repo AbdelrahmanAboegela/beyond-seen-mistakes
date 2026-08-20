@@ -1,0 +1,123 @@
+{
+  "method": "FACT",
+  "exercise": "squat",
+  "target": "010101",
+  "seed": 42,
+  "features": "j",
+  "soft_mask": true,
+  "use_proto": true,
+  "global_mask": false,
+  "shared_adapter": false,
+  "n_params": 84858,
+  "n_train": 219,
+  "n_val": 55,
+  "n_test": 15,
+  "split_audit": {
+    "target": "010101",
+    "seed": 42,
+    "split_offset": 15,
+    "target_groups": [
+      "87",
+      "95",
+      "97",
+      "99"
+    ],
+    "n_train": 219,
+    "n_val": 55,
+    "n_test": 15,
+    "train_state_counts": [
+      [
+        103,
+        116
+      ],
+      [
+        198,
+        21
+      ],
+      [
+        179,
+        40
+      ],
+      [
+        154,
+        65
+      ],
+      [
+        209,
+        10
+      ],
+      [
+        32,
+        187
+      ]
+    ],
+    "val_state_counts": [
+      [
+        30,
+        25
+      ],
+      [
+        35,
+        20
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        26,
+        29
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        19,
+        36
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.6734403834707678,
+    "micro_f1": 0.7071428571428572,
+    "bit_accuracy": 0.7515151515151515,
+    "exact_match": 0.23636363636363636,
+    "per_criterion_accuracy": [
+      0.6545454545454545,
+      0.7818181818181819,
+      0.7636363636363637,
+      0.8,
+      0.8727272727272727,
+      0.6363636363636364
+    ]
+  },
+  "test": {
+    "macro_f1": 0.25213675213675213,
+    "micro_f1": 0.4594594594594595,
+    "bit_accuracy": 0.5555555555555556,
+    "exact_match": 0.06666666666666667,
+    "per_criterion_accuracy": [
+      0.4666666666666667,
+      0.2,
+      1.0,
+      0.2,
+      0.7333333333333333,
+      0.7333333333333333
+    ]
+  },
+  "epochs": 22,
+  "train_seconds": 8.17887806892395,
+  "hyper": {
+    "lr": 0.0015,
+    "lam_proto": 0.0,
+    "lam_supcon": 0.0,
+    "lam_h1": 0.0,
+    "context_alpha": 0.0
+  }
+}

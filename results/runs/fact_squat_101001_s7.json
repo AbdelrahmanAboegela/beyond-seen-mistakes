@@ -1,0 +1,124 @@
+{
+  "method": "FACT",
+  "exercise": "squat",
+  "target": "101001",
+  "seed": 7,
+  "features": "j",
+  "soft_mask": true,
+  "use_proto": true,
+  "global_mask": false,
+  "shared_adapter": false,
+  "n_params": 84858,
+  "n_train": 214,
+  "n_val": 55,
+  "n_test": 25,
+  "split_audit": {
+    "target": "101001",
+    "seed": 7,
+    "split_offset": 25,
+    "target_groups": [
+      "113",
+      "117",
+      "19",
+      "55",
+      "83"
+    ],
+    "n_train": 214,
+    "n_val": 55,
+    "n_test": 25,
+    "train_state_counts": [
+      [
+        119,
+        95
+      ],
+      [
+        168,
+        46
+      ],
+      [
+        199,
+        15
+      ],
+      [
+        125,
+        89
+      ],
+      [
+        204,
+        10
+      ],
+      [
+        35,
+        179
+      ]
+    ],
+    "val_state_counts": [
+      [
+        33,
+        22
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        30,
+        25
+      ],
+      [
+        45,
+        10
+      ],
+      [
+        16,
+        39
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.586024709585217,
+    "micro_f1": 0.6795366795366795,
+    "bit_accuracy": 0.7484848484848485,
+    "exact_match": 0.2545454545454545,
+    "per_criterion_accuracy": [
+      0.5818181818181818,
+      0.7818181818181819,
+      0.8909090909090909,
+      0.7454545454545455,
+      0.8,
+      0.6909090909090909
+    ]
+  },
+  "test": {
+    "macro_f1": 0.35219916090133646,
+    "micro_f1": 0.6717557251908397,
+    "bit_accuracy": 0.7133333333333334,
+    "exact_match": 0.0,
+    "per_criterion_accuracy": [
+      0.8,
+      0.64,
+      0.24,
+      0.96,
+      0.92,
+      0.72
+    ]
+  },
+  "epochs": 28,
+  "train_seconds": 10.498450517654419,
+  "hyper": {
+    "lr": 0.0015,
+    "lam_proto": 0.0,
+    "lam_supcon": 0.0,
+    "lam_h1": 0.0,
+    "context_alpha": 0.0
+  }
+}

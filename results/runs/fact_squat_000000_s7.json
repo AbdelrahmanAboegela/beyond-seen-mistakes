@@ -1,0 +1,125 @@
+{
+  "method": "FACT",
+  "exercise": "squat",
+  "target": "000000",
+  "seed": 7,
+  "features": "j",
+  "soft_mask": true,
+  "use_proto": true,
+  "global_mask": false,
+  "shared_adapter": false,
+  "n_params": 84858,
+  "n_train": 210,
+  "n_val": 54,
+  "n_test": 17,
+  "split_audit": {
+    "target": "000000",
+    "seed": 7,
+    "split_offset": 63,
+    "target_groups": [
+      "21",
+      "45",
+      "79",
+      "89",
+      "91",
+      "93"
+    ],
+    "n_train": 210,
+    "n_val": 54,
+    "n_test": 17,
+    "train_state_counts": [
+      [
+        89,
+        121
+      ],
+      [
+        176,
+        34
+      ],
+      [
+        170,
+        40
+      ],
+      [
+        130,
+        80
+      ],
+      [
+        200,
+        10
+      ],
+      [
+        24,
+        186
+      ]
+    ],
+    "val_state_counts": [
+      [
+        33,
+        21
+      ],
+      [
+        32,
+        22
+      ],
+      [
+        44,
+        10
+      ],
+      [
+        20,
+        34
+      ],
+      [
+        44,
+        10
+      ],
+      [
+        10,
+        44
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.635136272962808,
+    "micro_f1": 0.7472527472527473,
+    "bit_accuracy": 0.7870370370370371,
+    "exact_match": 0.2037037037037037,
+    "per_criterion_accuracy": [
+      0.7222222222222222,
+      0.7777777777777778,
+      0.8888888888888888,
+      0.8518518518518519,
+      0.7962962962962963,
+      0.6851851851851852
+    ]
+  },
+  "test": {
+    "macro_f1": 0.0,
+    "micro_f1": 0.0,
+    "bit_accuracy": 0.5784313725490197,
+    "exact_match": 0.0,
+    "per_criterion_accuracy": [
+      0.5882352941176471,
+      0.9411764705882353,
+      0.7647058823529411,
+      0.17647058823529413,
+      1.0,
+      0.0
+    ]
+  },
+  "epochs": 23,
+  "train_seconds": 8.940770626068115,
+  "hyper": {
+    "lr": 0.0015,
+    "lam_proto": 0.0,
+    "lam_supcon": 0.0,
+    "lam_h1": 0.0,
+    "context_alpha": 0.0
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "exercise": "squat",
+  "target": "000001",
+  "seed": 123,
+  "model": "transformer",
+  "criteria": [
+    "Feet Out 30 F",
+    "Whole Feet Flat On the Floor (1) L",
+    "Bend Hips and Knees Simultaniously (1) L",
+    "Hips backwards (1) L",
+    "Lower back neural (1) L",
+    "Hips are lower than knees level (1 point) L"
+  ],
+  "n_train": 180,
+  "n_val": 49,
+  "n_test": 55,
+  "n_params": 189906,
+  "split_audit": {
+    "target": "000001",
+    "seed": 123,
+    "split_offset": 145,
+    "target_groups": [
+      "105",
+      "25",
+      "3",
+      "41",
+      "63",
+      "71",
+      "73",
+      "77",
+      "79",
+      "89",
+      "9",
+      "91",
+      "93"
+    ],
+    "n_train": 180,
+    "n_val": 49,
+    "n_test": 55,
+    "train_state_counts": [
+      [
+        65,
+        115
+      ],
+      [
+        144,
+        36
+      ],
+      [
+        140,
+        40
+      ],
+      [
+        91,
+        89
+      ],
+      [
+        170,
+        10
+      ],
+      [
+        19,
+        161
+      ]
+    ],
+    "val_state_counts": [
+      [
+        25,
+        24
+      ],
+      [
+        29,
+        20
+      ],
+      [
+        39,
+        10
+      ],
+      [
+        24,
+        25
+      ],
+      [
+        39,
+        10
+      ],
+      [
+        25,
+        24
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.47289987938725114,
+    "micro_f1": 0.5164319248826291,
+    "bit_accuracy": 0.6496598639455783,
+    "exact_match": 0.10204081632653061,
+    "per_criterion_accuracy": [
+      0.6122448979591837,
+      0.7142857142857143,
+      0.5510204081632653,
+      0.6530612244897959,
+      0.8571428571428571,
+      0.5102040816326531
+    ]
+  },
+  "test": {
+    "macro_f1": 0.10416666666666667,
+    "micro_f1": 0.3184713375796178,
+    "bit_accuracy": 0.6757575757575758,
+    "exact_match": 0.03636363636363636,
+    "per_criterion_accuracy": [
+      0.6363636363636364,
+      0.8909090909090909,
+      0.7818181818181819,
+      0.5272727272727272,
+      0.7636363636363637,
+      0.45454545454545453
+    ]
+  },
+  "epochs": 28,
+  "train_seconds": 3.5227203369140625
+}

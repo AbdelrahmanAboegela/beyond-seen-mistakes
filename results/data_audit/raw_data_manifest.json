@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "data_root": "E:\\Beyond_Seen_Mistakes\\data",
+  "files": {
+    "squat.xlsx": {
+      "bytes": 34930,
+      "sha256": "91b87c563b9dd0c7e07372c3274b9b482bd626ace9d10a024ed20b9723aaee2b"
+    },
+    "front_pose_squat.json": {
+      "bytes": 22032603,
+      "sha256": "c29345c657e22274e6a8677c63f5d260b16f0c5c381896fa40a4d5310856d84d"
+    },
+    "lat_pose_squat.json": {
+      "bytes": 21256621,
+      "sha256": "3c2c26e13fbbaa1b2d429f84dc3258edf9d98d9fe3f9f5a2a2c29c93c3cfc206"
+    },
+    "deadlift.xlsx": {
+      "bytes": 19434,
+      "sha256": "29c33672e544691f8cf4be74e2f5030fce1fc5b4d966537ec7be92ec3bc7f1a6"
+    },
+    "front_pose_deadlift.json": {
+      "bytes": 19915229,
+      "sha256": "cf1671b10aa54541f072a3e332e66fe161ed50388ca0ddb94de4e6bd26627985"
+    },
+    "lat_pose_deadlift.json": {
+      "bytes": 19823933,
+      "sha256": "ebc9890dfd65b35083344e5874e1c0cb038d8b52810b83c243c7f1219fa11085"
+    },
+    "lunges.xlsx": {
+      "bytes": 14071,
+      "sha256": "101ccf6b0f36bca23b7f20dc4573db110b67ed4e12fc140a3141a2f0db6b1f85"
+    },
+    "front_pose_lunges.json": {
+      "bytes": 7959235,
+      "sha256": "6cca92702ed70d3354b0b252a60502592dbe6a0cf630c4d51c1ed114d68a6840"
+    },
+    "lat_pose_lunges.json": {
+      "bytes": 7699465,
+      "sha256": "1833e5c6dbf16ca098868f3a74279c5a65fc93e312198b1e90f3a98d72ae5f08"
+    }
+  },
+  "quality_summary": [
+    {
+      "exercise": "deadlift",
+      "repetitions": 269,
+      "flagged_repetitions": 226,
+      "front_zero_frames": 250,
+      "lateral_zero_frames": 326,
+      "front_nonfinite_frames": 0,
+      "lateral_nonfinite_frames": 0,
+      "front_degenerate_scale_frames": 250,
+      "lateral_degenerate_scale_frames": 326
+    },
+    {
+      "exercise": "lunges",
+      "repetitions": 106,
+      "flagged_repetitions": 94,
+      "front_zero_frames": 33,
+      "lateral_zero_frames": 214,
+      "front_nonfinite_frames": 0,
+      "lateral_nonfinite_frames": 0,
+      "front_degenerate_scale_frames": 33,
+      "lateral_degenerate_scale_frames": 214
+    },
+    {
+      "exercise": "squat",
+      "repetitions": 295,
+      "flagged_repetitions": 200,
+      "front_zero_frames": 183,
+      "lateral_zero_frames": 702,
+      "front_nonfinite_frames": 0,
+      "lateral_nonfinite_frames": 0,
+      "front_degenerate_scale_frames": 183,
+      "lateral_degenerate_scale_frames": 702
+    }
+  ]
+}

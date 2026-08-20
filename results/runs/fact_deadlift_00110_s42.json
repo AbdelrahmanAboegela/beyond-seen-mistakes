@@ -1,0 +1,118 @@
+{
+  "method": "FACT",
+  "exercise": "deadlift",
+  "target": "00110",
+  "seed": 42,
+  "features": "j",
+  "soft_mask": true,
+  "use_proto": true,
+  "global_mask": false,
+  "shared_adapter": false,
+  "n_params": 81048,
+  "n_train": 178,
+  "n_val": 48,
+  "n_test": 33,
+  "split_audit": {
+    "target": "00110",
+    "seed": 42,
+    "split_offset": 240,
+    "target_groups": [
+      "101",
+      "103",
+      "37",
+      "49",
+      "69",
+      "7",
+      "95",
+      "97",
+      "99"
+    ],
+    "n_train": 178,
+    "n_val": 48,
+    "n_test": 33,
+    "train_state_counts": [
+      [
+        158,
+        20
+      ],
+      [
+        158,
+        20
+      ],
+      [
+        127,
+        51
+      ],
+      [
+        98,
+        80
+      ],
+      [
+        169,
+        9
+      ]
+    ],
+    "val_state_counts": [
+      [
+        37,
+        11
+      ],
+      [
+        35,
+        13
+      ],
+      [
+        38,
+        10
+      ],
+      [
+        22,
+        26
+      ],
+      [
+        39,
+        9
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.5076402116402117,
+    "micro_f1": 0.5352112676056338,
+    "bit_accuracy": 0.725,
+    "exact_match": 0.125,
+    "per_criterion_accuracy": [
+      0.6875,
+      0.7291666666666666,
+      0.75,
+      0.5833333333333334,
+      0.875
+    ]
+  },
+  "test": {
+    "macro_f1": 0.2711538461538462,
+    "micro_f1": 0.576271186440678,
+    "bit_accuracy": 0.696969696969697,
+    "exact_match": 0.09090909090909091,
+    "per_criterion_accuracy": [
+      0.7878787878787878,
+      0.7575757575757576,
+      0.45454545454545453,
+      0.5757575757575758,
+      0.9090909090909091
+    ]
+  },
+  "epochs": 19,
+  "train_seconds": 5.128180265426636,
+  "hyper": {
+    "lr": 0.0015,
+    "lam_proto": 0.0,
+    "lam_supcon": 0.0,
+    "lam_h1": 0.0,
+    "context_alpha": 0.0
+  }
+}

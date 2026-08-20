@@ -1,0 +1,45 @@
+{
+  "primary_tests": {
+    "H1_exact_match_gap": {
+      "n_targets": 12,
+      "mean_validation_minus_loco": 0.11336171781452319,
+      "bootstrap95": [
+        0.08086937395451639,
+        0.14542317920585077
+      ],
+      "wilcoxon_two_sided": 0.00048828125,
+      "holm_p": 0.0009765625
+    },
+    "H2_pressure_accuracy": {
+      "mean_within_target_rho": -0.6507475231012901,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": 0.0013072050270076544,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05,
+      "holm_p": 0.00011999760004799905
+    },
+    "H3_lmr_error_auprc": {
+      "n_targets": 12,
+      "mean_error_auprc_gain": 0.04991268362145934,
+      "bootstrap95": [
+        -0.0014772358974419518,
+        0.10260796009902906
+      ],
+      "wilcoxon_two_sided": 0.09228515625,
+      "holm_p": 0.09228515625
+    }
+  },
+  "secondary": {
+    "H1_bit_accuracy_gap": {
+      "n_targets": 12,
+      "mean_validation_minus_loco": 0.04610717250433901,
+      "bootstrap95": [
+        0.002520612334885864,
+        0.0973679205622134
+      ],
+      "wilcoxon_two_sided": 0.1513671875
+    }
+  },
+  "statistical_unit": "held-out natural composition (12 targets)"
+}

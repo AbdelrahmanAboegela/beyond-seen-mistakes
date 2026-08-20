@@ -1,0 +1,4 @@
+exercise,repetitions,flagged_repetitions,front_zero_frames,lateral_zero_frames,front_nonfinite_frames,lateral_nonfinite_frames,front_degenerate_scale_frames,lateral_degenerate_scale_frames
+deadlift,269,226,250,326,0,0,250,326
+lunges,106,94,33,214,0,0,33,214
+squat,295,200,183,702,0,0,183,702
