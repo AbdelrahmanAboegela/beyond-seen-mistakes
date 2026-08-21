@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 venv/
 build/
+dist/
+*.egg-info/
 cache/
 checkpoints/
 results/reproduction/
@@ -11,6 +13,9 @@ results/matched_composition/
 results/matched_composition_v2/interim_tcn/
 data/*
 !data/README.md
+# Synthetic placeholder fixtures are regenerated on demand by
+# src/synthetic_data.py and must never be committed as if they were data.
+data/synthetic/
 paper/*.aux
 paper/*.bbl
 paper/*.blg

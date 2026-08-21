@@ -6,23 +6,39 @@ confidence after perturbing the pre-specified criterion region with changes
 under size-matched random joint sets from the same view.  Context pressure is
 computed only from the fold's training labels.
 """
-from __future__ import annotations
+import sys
+from pathlib import Path
+SRC_DIR = Path(__file__).resolve().parent
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+ROOT_DIR = SRC_DIR.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 import argparse
 import glob
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
 from scipy.stats import rankdata,spearmanr,wilcoxon
 
-from alexgym_data import CRITERIA, load_exercise
-from loco_split import make_loco_split
-from modern_models import ANAT_MAP
-from train_backbones import build
-from train_fact import FACT
+try:
+    from .alexgym_data import CRITERIA, load_exercise
+    from .loco_split import make_loco_split, DEFAULT_MIN_TRAIN_STATE, DEFAULT_MIN_VAL_STATE
+    from .modern_models import ANAT_MAP
+    from .train_backbones import build
+    from .train_fact import FACT
+except ImportError:
+    from alexgym_data import CRITERIA, load_exercise
+    from loco_split import make_loco_split, DEFAULT_MIN_TRAIN_STATE, DEFAULT_MIN_VAL_STATE
+    from modern_models import ANAT_MAP
+    from train_backbones import build
+    from train_fact import FACT
+
+
+CANONICAL_OUT = 'results/context/criterion_rows.csv'
 
 
 def load_model(checkpoint):
@@ -72,6 +88,10 @@ def blocked_permutation(df,x,y,n=50000,seed=20260820):
         rx=rankdata(g[x].to_numpy());ry=rankdata(g[y].to_numpy())
         rx=rx-rx.mean();ry=ry-ry.mean();den=np.linalg.norm(rx)*np.linalg.norm(ry)
         if den>0:groups.append((rx,ry,den))
+    if not groups:
+        # Every composition was constant in x or y, so no within-target rank
+        # association is defined; returning 0/1 here would fake a null result.
+        raise ValueError(f'No held-out composition has variation in both {x!r} and {y!r}.')
     observed=float(np.mean([np.dot(rx,ry)/den for rx,ry,den in groups]))
     rng=np.random.default_rng(seed);null=np.zeros(n)
     for rx,ry,den in groups:
@@ -84,13 +104,24 @@ def blocked_permutation(df,x,y,n=50000,seed=20260820):
                 null_mean=float(np.mean(null)),n_informative_targets=len(groups))
 
 
+def split_rule(meta):
+    """Reuse the support thresholds a checkpoint was trained under, so the
+    reconstructed split is byte-identical to the one that produced it."""
+    audit=meta.get('split_audit') or {}
+    return (int(audit.get('min_train_state',DEFAULT_MIN_TRAIN_STATE)),
+            int(audit.get('min_val_state',DEFAULT_MIN_VAL_STATE)))
+
+
 def analyze_one(checkpoint,data,n_random=50,modes=('zero','temporal_mean')):
     meta,m=load_model(checkpoint);ex=meta['exercise'];target=str(meta['target']);seed=int(meta['seed'])
     X,Y,co,g,_=load_exercise(data,ex,T=16)
-    tr,_,te,audit=make_loco_split(Y,co,g,target,seed)
+    min_train_state,min_val_state=split_rule(meta)
+    tr,_,te,audit=make_loco_split(Y,co,g,target,seed,min_train_state=min_train_state,min_val_state=min_val_state)
     base=probabilities(m,X[te]);truth=Y[te].astype(int);base_correct=(base>=.5)==truth
     rng=np.random.default_rng(seed+1701);rows=[]
     for c,(view,joints) in enumerate(ANAT_MAP[ex]):
+        # The size-matched control samples from all 33 joints, so it may overlap
+        # the annotated set.  That makes relative sensitivity conservative.
         joints=sorted(set(map(int,joints)));available=np.arange(33)
         pressure=int(np.sum(co[tr]==flip_bit(target,c)))
         for mode in modes:
@@ -109,24 +140,42 @@ def analyze_one(checkpoint,data,n_random=50,modes=('zero','temporal_mean')):
                 baseline_accuracy=float(base_correct[:,c].mean()),baseline_correct_confidence=float(correct_confidence(base[:,c],truth[:,c]).mean()),
                 mapped_confidence_drop=float(mapped_drop.mean()),random_confidence_drop=float(random_drops.mean()),
                 relative_evidence_sensitivity=float(mapped_drop.mean()-random_drops.mean()),
-                random_drop_sd=float(random_drops.mean(1).std(ddof=1)),mapped_spillover=float(mapped_spill),
+                random_drop_sd=float(random_drops.mean(1).std(ddof=1)) if n_random>1 else float('nan'),mapped_spillover=float(mapped_spill),
                 split_offset=audit['split_offset']))
     return rows
 
 
+def safe_wilcoxon(d, zero_method='zsplit', alternative='two-sided'):
+    d = np.asarray(d, float)
+    if len(d) == 0 or np.all(d == 0):
+        return 1.0
+    try:
+        return float(wilcoxon(d, zero_method=zero_method, alternative=alternative).pvalue)
+    except Exception:
+        return 1.0
+
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument('checkpoints',nargs='*',help='Checkpoint paths or glob patterns.')
-    ap.add_argument('--data',default='data');ap.add_argument('--out',default='results/context_evidence/criterion_rows.csv')
+    # results/context is the single canonical home for these outputs. An earlier
+    # default wrote a second copy under results/context_evidence, leaving two
+    # trees that disagreed in the last float digit.
+    ap.add_argument('--data',default='data');ap.add_argument('--out',default=CANONICAL_OUT)
     ap.add_argument('--random-masks',type=int,default=50)
     ap.add_argument('--from-csv',help='Reuse an existing raw criterion-row CSV and only recompute statistics.')
     a=ap.parse_args();paths=[]
     for pattern in a.checkpoints:paths.extend(glob.glob(pattern))
     paths=sorted(set(paths))
     out=Path(a.out);out.parent.mkdir(parents=True,exist_ok=True)
+    if not paths and not a.from_csv:
+        default_csv = Path(CANONICAL_OUT)
+        if default_csv.exists():
+            a.from_csv = str(default_csv)
+        else:
+            paths = sorted(glob.glob('results/checkpoints/*.pt'))
     if a.from_csv:df=pd.read_csv(a.from_csv)
     else:
-        if not paths:raise FileNotFoundError('No checkpoints matched.')
+        if not paths:raise FileNotFoundError('No checkpoints or pre-existing CSV found.')
         rows=[]
         for p in paths:rows.extend(analyze_one(p,a.data,a.random_masks))
         df=pd.DataFrame(rows);df.to_csv(out,index=False)
@@ -150,7 +199,7 @@ def main():
         for metric in ('baseline_accuracy','relative_evidence_sensitivity'):
             d=z[f'{metric}_fact']-z[f'{metric}_tcn']
             paired.append(dict(perturbation=mode,metric=metric,n=len(d),mean_difference=float(d.mean()),
-                               wilcoxon_two_sided=float(wilcoxon(d,zero_method='zsplit').pvalue)))
+                               wilcoxon_two_sided=safe_wilcoxon(d,zero_method='zsplit')))
     payload={'criterion_level':stats,'paired_fact_minus_tcn':paired}
     stat_path=out.with_name(out.stem+'_stats.json');stat_path.write_text(json.dumps(payload,indent=2))
     print(json.dumps({'checkpoints':len(paths),'rows':len(df),'aggregated_rows':len(agg),'out':str(out),'stats':payload},indent=2))

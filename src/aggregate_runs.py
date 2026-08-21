@@ -10,14 +10,31 @@ def bootstrap_mean(x,n=100000,seed=20260820):
     means=x[rng.integers(0,len(x),size=(n,len(x)))].mean(1)
     return [float(v) for v in np.quantile(means,[.025,.975])]
 
+def safe_wilcoxon(d, zero_method='zsplit', alternative='two-sided'):
+    d = np.asarray(d, float)
+    if len(d) == 0 or np.all(d == 0):
+        return 1.0
+    try:
+        return float(wilcoxon(d, zero_method=zero_method, alternative=alternative).pvalue)
+    except Exception:
+        return 1.0
+
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--runs',default='results/runs/*.json')
     ap.add_argument('--outdir',default='results/context');a=ap.parse_args();rows=[]
+    skipped=[]
     for p in glob.glob(a.runs):
         d=json.loads(Path(p).read_text());model=d.get('model','fact' if d.get('method')=='FACT' else 'unknown')
+        if d.get('synthetic_data'):
+            raise ValueError(f'{p} was trained on synthetic placeholder data and must not be aggregated.')
         for split in ('val','test'):
+            # A run produced with --no-test stores test=None; record the omission
+            # instead of crashing, so a partial sweep still aggregates.
+            if not isinstance(d.get(split),dict):skipped.append((Path(p).name,split));continue
             for metric,val in d[split].items():
-                if isinstance(val,(int,float)):rows.append(dict(model=model,exercise=d['exercise'],target=str(d['target']),seed=d['seed'],split=split,metric=metric,value=val))
+                if isinstance(val,(int,float)) and not isinstance(val,bool):rows.append(dict(model=model,exercise=d['exercise'],target=str(d['target']),seed=d['seed'],split=split,metric=metric,value=val))
+    if not rows:raise FileNotFoundError(f'No run records with usable metrics matched {a.runs!r}.')
+    if skipped:print(f'note: {len(skipped)} run/split records had no metrics and were skipped, e.g. {skipped[:3]}')
     raw=pd.DataFrame(rows);out=Path(a.outdir);out.mkdir(parents=True,exist_ok=True);raw.to_csv(out/'metrics_long.csv',index=False)
     tm=raw.groupby(['model','exercise','target','split','metric'],as_index=False).value.mean()
     tm.to_csv(out/'target_mean_metrics.csv',index=False)
@@ -34,7 +51,7 @@ def main():
             d=(z.value_fact-z.value_other).to_numpy();lo,hi=bootstrap_mean(d)
             paired.append(dict(other=other,split=split,metric=metric,n_targets=len(d),fact_mean=float(z.value_fact.mean()),
                 other_mean=float(z.value_other.mean()),difference=float(d.mean()),difference_bootstrap95=[lo,hi],
-                wilcoxon_two_sided=float(wilcoxon(d,zero_method='zsplit').pvalue),wins=int((d>0).sum()),ties=int((d==0).sum()),losses=int((d<0).sum())))
+                wilcoxon_two_sided=safe_wilcoxon(d,zero_method='zsplit'),wins=int((d>0).sum()),ties=int((d==0).sum()),losses=int((d<0).sum())))
     (out/'paired_fact_models.json').write_text(json.dumps(paired,indent=2))
     print(json.dumps({'runs':int(raw[['model','exercise','target','seed']].drop_duplicates().shape[0]),'summary':summary,'paired':paired},indent=2))
 

@@ -17,9 +17,17 @@ from sklearn.metrics import average_precision_score,roc_auc_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from alexgym_data import load_exercise
-from analyze_context_evidence import load_model,probabilities
-from loco_split import make_loco_split
+try:
+    from .alexgym_data import load_exercise
+    from .analyze_context_evidence import load_model, probabilities, split_rule
+    from .loco_split import make_loco_split
+except ImportError:
+    from alexgym_data import load_exercise
+    from analyze_context_evidence import load_model, probabilities, split_rule
+    from loco_split import make_loco_split
+
+CANONICAL_OUT = 'results/supplementary/run_metrics.csv'
+
 
 def bootstrap_mean(x,n=100000,seed=20260820):
     x=np.asarray(x,float);rng=np.random.default_rng(seed);v=x[rng.integers(0,len(x),(n,len(x)))].mean(1)
@@ -51,7 +59,9 @@ def safe_metric(error,risk,kind):
 
 def analyze(checkpoint,data):
     meta,m=load_model(checkpoint);ex=meta['exercise'];target=str(meta['target']);seed=int(meta['seed'])
-    X,Y,co,g,_=load_exercise(data,ex,T=16);tr,va,te,_=make_loco_split(Y,co,g,target,seed)
+    min_train_state,min_val_state=split_rule(meta)
+    X,Y,co,g,_=load_exercise(data,ex,T=16)
+    tr,va,te,_=make_loco_split(Y,co,g,target,seed,min_train_state=min_train_state,min_val_state=min_val_state)
     pv=probabilities(m,X[va]);pt=probabilities(m,X[te]);fv,qv=features(pv,co[tr]);ft,qt=features(pt,co[tr])
     ev=(qv!=Y[va].astype(int).reshape(-1)).astype(int);et=(qt!=Y[te].astype(int).reshape(-1)).astype(int)
     risks={'confidence':ft[:,0],'pressure':ft[:,1]}
@@ -66,15 +76,33 @@ def analyze(checkpoint,data):
                          accuracy_at_80=selective_accuracy(et,risk,.8),accuracy_at_60=selective_accuracy(et,risk,.6)))
     return rows
 
+def safe_wilcoxon(d, zero_method='zsplit', alternative='two-sided'):
+    d = np.asarray(d, float)
+    if len(d) == 0 or np.all(d == 0):
+        return 1.0
+    try:
+        return float(wilcoxon(d, zero_method=zero_method, alternative=alternative).pvalue)
+    except Exception:
+        return 1.0
+
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('checkpoints',nargs='*');ap.add_argument('--data',default='data');ap.add_argument('--jobs',type=int,default=3)
-    ap.add_argument('--out',default='results/selective_risk/v2/run_metrics.csv');ap.add_argument('--from-csv')
+    # results/supplementary is the single canonical home for this experiment. An
+    # earlier default wrote a parallel results/selective_risk/v2 tree whose
+    # run_metrics.csv was left empty.
+    ap.add_argument('--out',default=CANONICAL_OUT);ap.add_argument('--from-csv')
     a=ap.parse_args();paths=[]
     for p in a.checkpoints:paths.extend(glob.glob(p))
     paths=[p for p in sorted(set(paths)) if Path(p).name.startswith(('fact_','tcn_','gru_','transformer_','ssm_'))]
     out=Path(a.out);out.parent.mkdir(parents=True,exist_ok=True)
+    if not paths and not a.from_csv:
+        if Path(CANONICAL_OUT).exists():
+            a.from_csv = CANONICAL_OUT
+        else:
+            paths = [p for p in sorted(glob.glob('results/checkpoints/*.pt')) if Path(p).name.startswith(('fact_','tcn_','gru_','transformer_','ssm_'))]
     if a.from_csv:df=pd.read_csv(a.from_csv,dtype={'target':str})
     else:
+        if not paths:raise FileNotFoundError('No checkpoints or pre-existing CSV found.')
         rows=[]
         with ThreadPoolExecutor(max_workers=a.jobs) as pool:
             for part in pool.map(lambda p:analyze(p,a.data),paths):rows.extend(part)
@@ -89,14 +117,14 @@ def main():
         for metric,direction in [('error_auprc',1),('error_auroc',1),('aurc',-1),('accuracy_at_80',1),('accuracy_at_60',1)]:
             d=(z[f'{metric}_combined']-z[f'{metric}_confidence'])*direction
             paired.append(dict(model=model,metric=metric,n=len(d),improvement=float(d.mean()),bootstrap95=bootstrap_mean(d),
-                               wilcoxon_two_sided=float(wilcoxon(d,alternative='two-sided',zero_method='zsplit').pvalue)))
+                               wilcoxon_two_sided=safe_wilcoxon(d,alternative='two-sided',zero_method='zsplit')))
     overall=[]
     c=tm[tm.risk=='combined'];b=tm[tm.risk=='confidence'];z=c.merge(b,on=['model','exercise','target'],suffixes=('_combined','_confidence'))
     for metric,direction in [('error_auprc',1),('error_auroc',1),('aurc',-1),('accuracy_at_80',1),('accuracy_at_60',1)]:
         z['gain']=(z[f'{metric}_combined']-z[f'{metric}_confidence'])*direction
         target_gain=z.groupby(['exercise','target']).gain.mean().to_numpy()
         overall.append(dict(metric=metric,n_targets=len(target_gain),mean_improvement=float(target_gain.mean()),bootstrap95=bootstrap_mean(target_gain),
-                            wilcoxon_two_sided=float(wilcoxon(target_gain,alternative='two-sided',zero_method='zsplit').pvalue)))
+                            wilcoxon_two_sided=safe_wilcoxon(target_gain,alternative='two-sided',zero_method='zsplit')))
     payload={'checkpoints':len(paths) if paths else int(df[['model','exercise','target','seed']].drop_duplicates().shape[0]),'summary':summary.to_dict(orient='records'),'paired':paired,'overall_target_blocked':overall}
     out.with_name('stats.json').write_text(json.dumps(payload,indent=2));print(json.dumps(payload,indent=2))
 

@@ -7,6 +7,13 @@ used in result files therefore carry a ``_style`` suffix.
 
 CAPER = Counterfactual Anatomical Prototype Exchange and Residualization.
 CAPER is retained as an exploratory development model; the final reported method is FACT in train_fact.py.
+
+Scope: nothing in this module trains any reported result. The five-model panel
+is built by ``train_backbones.build`` and ``train_fact.FACT``; the only names
+imported from here by the rest of the pipeline are ``ANAT_MAP``,
+``pose_features`` and ``split_pose``. Everything else -- the *_style backbones,
+CriterionSlots and CAPER -- is exploratory development code kept for provenance
+and exercised only by ``tests/test_modern_models.py``.
 """
 from __future__ import annotations
 import math
@@ -66,7 +73,8 @@ APHYS=physical_adjacency()
 def split_pose(x:torch.Tensor):
     """B,T,198 -> B,2,T,33,3."""
     B,T,D=x.shape
-    assert D==198, D
+    if D!=198:
+        raise ValueError(f"expected 198 features (2 views x 33 joints x 3 coords), got {D}")
     return x.view(B,T,2,33,3).permute(0,2,1,3,4).contiguous()
 
 def pose_features(x:torch.Tensor, mode='jbm'):
@@ -114,7 +122,8 @@ class HopGraphBlock(nn.Module):
     """Topology-aware grouped graph convolution inspired by graph-distance/BlockGC ideas."""
     def __init__(self,d,groups=4,max_hop=4,learn_hops=True,drop=.08):
         super().__init__(); self.d=d; self.groups=groups; self.max_hop=max_hop; self.learn_hops=learn_hops
-        assert d%groups==0
+        if d%groups:
+            raise ValueError(f"channel width {d} must divide evenly into {groups} groups")
         self.register_buffer('hops',HOPS[:max_hop+1].clone())
         self.theta=nn.Parameter(torch.zeros(groups,max_hop+1))
         with torch.no_grad():
@@ -301,8 +310,8 @@ class CAPER(nn.Module):
     The gate is learned from features; training-only counterfactual pressure supplies a
     reliability target, so no ground-truth test diagnosis is required at inference.
     """
-    def __init__(self,exercise,d=28,ed=20,features='jbm',graph=True,masks=True,prototypes=True,context=True,pressure_gate=True,soft_masks=True,hard_views=True):
-        super().__init__(); self.exercise=exercise; self.C=len(ANAT_MAP[exercise]); self.d=d; self.ed=ed; self.use_masks=masks; self.use_proto=prototypes; self.use_context=context; self.pressure_gate=pressure_gate
+    def __init__(self,exercise,d=28,ed=20,features='jbm',graph=True,masks=True,prototypes=True,context=True,soft_masks=True,hard_views=True):
+        super().__init__(); self.exercise=exercise; self.C=len(ANAT_MAP[exercise]); self.d=d; self.ed=ed; self.use_masks=masks; self.use_proto=prototypes; self.use_context=context
         self.enc=SkeletonEncoder(d,features,layers=1,graph=graph,learn_hops=graph)
         self.slots=CriterionSlots(exercise,d,soft_masks=soft_masks,hard_views=hard_views)
         self.evidence=nn.Sequential(nn.Linear(d,ed),nn.GELU(),nn.LayerNorm(ed))
@@ -351,25 +360,57 @@ class CAPER(nn.Module):
     def decode_slots(self,e,c): return self.decode(e,c)
 
 
+# Explicit CAPER ablation registry: name -> the single config override it applies.
+# An earlier chain of elif branches accepted four further names
+# (caper_no_neighbor/no_pair/no_exchange/no_pressure) and fell through without
+# changing anything, so each silently rebuilt the *baseline*.  Running one would
+# have shown "removing this component changes nothing" -- a false negative.  The
+# mechanisms they name are not implemented in this CAPER, so they now fail loudly.
+CAPER_VARIANTS={
+    'caper':             {},
+    'cape':              {'context': False},
+    'caper_no_context':  {'context': False},
+    'caper_no_graph':    {'graph': False},
+    'caper_no_mask':     {'masks': False},
+    'caper_no_proto':    {'prototypes': False},
+    'caper_hard_mask':   {'soft_masks': False},
+    'caper_hard_view':   {'hard_views': True},
+    'caper_soft_view':   {'hard_views': False},
+}
+UNIMPLEMENTED_CAPER_VARIANTS={
+    'caper_no_neighbor':  'neighbour exchange',
+    'caper_no_pair':      'paired-recording exchange',
+    'caper_no_exchange':  'counterfactual prototype exchange',
+    'caper_no_pressure':  'the pressure gate',
+}
+
+BACKBONE_BUILDERS={
+    'blockgcn_style': TopoBlockGCNStyle,
+    'protogcn_style': ProtoGCNStyle,
+    'hypergcn_style': HyperGCNStyle,
+    'gamba_style':    GambaStyle,
+}
+
+
 def build_modern(kind,nout,exercise=None,features='jbm',**kw):
-    if kind=='blockgcn_core':
-        from blockgcn_core import BlockGCNCoreAdapt
-        return BlockGCNCoreAdapt(nout)
-    if kind=='blockgcn_style': return TopoBlockGCNStyle(nout,features=features)
-    if kind=='protogcn_style': return ProtoGCNStyle(nout,features=features)
-    if kind=='hypergcn_style': return HyperGCNStyle(nout,features=features)
-    if kind=='gamba_style': return GambaStyle(nout,features=features)
-    if kind=='cape' or kind.startswith('caper'):
-        assert exercise is not None
-        cfg=dict(graph=True,masks=True,prototypes=True,context=True,pressure_gate=True,soft_masks=True,hard_views=True)
-        if kind=='cape': cfg['context']=False
-        elif kind=='caper_soft_view': cfg['hard_views']=False
-        elif kind=='caper_hard_view': cfg['hard_views']=True
-        elif kind=='caper_no_graph': cfg['graph']=False
-        elif kind=='caper_no_mask': cfg['masks']=False
-        elif kind=='caper_no_proto': cfg['prototypes']=False
-        elif kind=='caper_no_context': cfg['context']=False
-        elif kind=='caper_hard_mask': cfg['soft_masks']=False
-        elif kind not in ('caper','cape','caper_no_neighbor','caper_no_pair','caper_no_exchange','caper_no_pressure','caper_hard_view','caper_soft_view'): raise ValueError(kind)
+    """Construct an exploratory model.
+
+    None of these are part of the reported five-model panel; see the module
+    docstring.  Unknown or unimplemented names raise rather than silently
+    returning something close enough to look plausible.
+    """
+    if kind in BACKBONE_BUILDERS:
+        return BACKBONE_BUILDERS[kind](nout,features=features)
+    if kind in UNIMPLEMENTED_CAPER_VARIANTS:
+        raise NotImplementedError(
+            f"{kind!r} names an ablation of {UNIMPLEMENTED_CAPER_VARIANTS[kind]}, which this "
+            "CAPER implementation does not have. It previously returned the unmodified "
+            "baseline, which would read as a null ablation result.")
+    if kind in CAPER_VARIANTS:
+        if exercise is None:
+            raise ValueError(f"{kind!r} is criterion-conditioned and requires an exercise.")
+        cfg=dict(graph=True,masks=True,prototypes=True,context=True,soft_masks=True,hard_views=True)
+        cfg.update(CAPER_VARIANTS[kind])
         return CAPER(exercise,features=features,**cfg)
-    raise ValueError(kind)
+    raise ValueError(f"Unknown model kind {kind!r}; choose from "
+                     f"{sorted(set(BACKBONE_BUILDERS)|set(CAPER_VARIANTS))}")

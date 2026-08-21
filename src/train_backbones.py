@@ -1,11 +1,23 @@
-import argparse,json,random,time
+import sys
 from pathlib import Path
+SRC_DIR = Path(__file__).resolve().parent
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+ROOT_DIR = SRC_DIR.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+import argparse,json,random,time
 import numpy as np, torch
 from torch import nn
 from torch.utils.data import Dataset,DataLoader
 from sklearn.metrics import f1_score
-from alexgym_data import load_exercise, CRITERIA
-from loco_split import make_loco_split
+try:
+    from .alexgym_data import load_exercise, CRITERIA
+    from .loco_split import make_loco_split, DEFAULT_MIN_TRAIN_STATE, DEFAULT_MIN_VAL_STATE
+except ImportError:
+    from alexgym_data import load_exercise, CRITERIA
+    from loco_split import make_loco_split, DEFAULT_MIN_TRAIN_STATE, DEFAULT_MIN_VAL_STATE
 
 torch.set_num_threads(2)
 
@@ -39,11 +51,13 @@ class GRUModel(nn.Module):
     def forward(self,x): h,_=self.rnn(self.inp(x)); return self.head(torch.cat([h.mean(1),h.amax(1)],1))
 
 class TransformerModel(nn.Module):
-    def __init__(self,din,nout,d=96,heads=4,layers=2):
-        super().__init__(); self.inp=nn.Sequential(nn.LayerNorm(din),nn.Linear(din,d)); self.pos=nn.Parameter(torch.randn(1,16,d)*.02)
+    def __init__(self,din,nout,d=96,heads=4,layers=2,max_len=16):
+        super().__init__(); self.inp=nn.Sequential(nn.LayerNorm(din),nn.Linear(din,d)); self.pos=nn.Parameter(torch.randn(1,max_len,d)*.02)
         enc=nn.TransformerEncoderLayer(d_model=d,nhead=heads,dim_feedforward=2*d,dropout=.12,activation='gelu',batch_first=True,norm_first=True)
         self.enc=nn.TransformerEncoder(enc,num_layers=layers); self.norm=nn.LayerNorm(d); self.head=nn.Sequential(nn.Linear(2*d,d),nn.GELU(),nn.Dropout(.12),nn.Linear(d,nout))
     def forward(self,x):
+        if x.shape[1]>self.pos.shape[1]:
+            raise ValueError(f'sequence length {x.shape[1]} exceeds positional table of {self.pos.shape[1]}')
         h=self.enc(self.inp(x)+self.pos[:,:x.shape[1]]); h=self.norm(h); return self.head(torch.cat([h.mean(1),h.amax(1)],1))
 
 class SelectiveSSMBlock(nn.Module):
@@ -94,28 +108,39 @@ def build(kind,din,nout):
     if kind=='stgcn': return STGCNModel(nout)
     raise ValueError(kind)
 
-def run(ex,target,seed,kind,data,epochs=100,checkpoint=None):
+def run(ex,target,seed,kind,data,epochs=100,checkpoint=None,patience=15,
+        min_train_state=DEFAULT_MIN_TRAIN_STATE,min_val_state=DEFAULT_MIN_VAL_STATE):
     seed_all(seed); X,Y,co,g,df=load_exercise(data,ex,T=16)
-    tr,va,te,split_audit=make_loco_split(Y,co,g,target,seed)
+    tr,va,te,split_audit=make_loco_split(Y,co,g,target,seed,min_train_state=min_train_state,min_val_state=min_val_state)
     dltr=DataLoader(DS(X,Y,tr),32,shuffle=True); dlv=DataLoader(DS(X,Y,va),64); dlt=DataLoader(DS(X,Y,te),64)
     m=build(kind,X.shape[-1],Y.shape[1]); pos=Y[tr].sum(0); neg=len(tr)-pos; pw=torch.tensor(np.clip(neg/np.maximum(pos,1),.25,8),dtype=torch.float32)
     lf=nn.BCEWithLogitsLoss(pos_weight=pw); op=torch.optim.AdamW(m.parameters(),lr=1.5e-3,weight_decay=2e-4)
-    best=-1; state=None; stale=0; t0=time.time()
+    best=-1; state=None; stale=0; t0=time.time(); e=-1
     for e in range(epochs):
         m.train()
         for x,y in dltr: op.zero_grad(); loss=lf(m(x),y); loss.backward(); torch.nn.utils.clip_grad_norm_(m.parameters(),5); op.step()
         yv,pv=pred(m,dlv); s=metrics(yv,pv)['macro_f1']
         if s>best+1e-4: best=s; state={k:v.detach().clone() for k,v in m.state_dict().items()}; stale=0
         else: stale+=1
-        if stale>=15: break
-    m.load_state_dict(state); yv,pv=pred(m,dlv); yt,pt=pred(m,dlt)
+        if stale>=patience: break
+    if state is not None: m.load_state_dict(state)
+    yv,pv=pred(m,dlv); yt,pt=pred(m,dlt)
     if checkpoint:
         cp=Path(checkpoint);cp.parent.mkdir(parents=True,exist_ok=True)
         torch.save({'model':m.state_dict(),'model_kind':kind,'exercise':ex,'target':target,
                     'seed':seed,'input_dim':int(X.shape[-1]),'n_outputs':int(Y.shape[1]),
                     'split_audit':split_audit},cp)
-    return {'exercise':ex,'target':target,'seed':seed,'model':kind,'criteria':CRITERIA[ex],'n_train':len(tr),'n_val':len(va),'n_test':len(te),'n_params':sum(p.numel() for p in m.parameters()),'split_audit':split_audit,'val':metrics(yv,pv),'test':metrics(yt,pt),'epochs':e+1,'train_seconds':time.time()-t0}
+    return {'exercise':ex,'target':target,'seed':seed,'model':kind,'criteria':CRITERIA[ex],'n_train':len(tr),'n_val':len(va),'n_test':len(te),'n_params':sum(p.numel() for p in m.parameters()),'split_audit':split_audit,'synthetic_data':bool(df.attrs.get('is_synthetic',False)),
+            # Backbones train on labels alone; no objective here consults the
+            # held-out composition. Emitted for schema parity with FACT records.
+            'uses_holdout_identity':False,
+            'val':metrics(yv,pv),'test':metrics(yt,pt),'epochs':e+1,'train_seconds':time.time()-t0}
 
 if __name__=='__main__':
-    ap=argparse.ArgumentParser(); ap.add_argument('--data',default='data'); ap.add_argument('--exercise',default='squat'); ap.add_argument('--target',required=True); ap.add_argument('--seed',type=int,default=42); ap.add_argument('--model',choices=['tcn','gru','transformer','ssm','stgcn'],required=True); ap.add_argument('--out',required=True); ap.add_argument('--epochs',type=int,default=100); ap.add_argument('--checkpoint'); a=ap.parse_args()
-    d=run(a.exercise,a.target,a.seed,a.model,a.data,a.epochs,a.checkpoint); Path(a.out).write_text(json.dumps(d,indent=2)); print(json.dumps(d,indent=2)); import sys,os; sys.stdout.flush(); os._exit(0)
+    ap=argparse.ArgumentParser(); ap.add_argument('--data',default='data'); ap.add_argument('--exercise',default='squat'); ap.add_argument('--target',required=True); ap.add_argument('--seed',type=int,default=42); ap.add_argument('--model',choices=['tcn','gru','transformer','ssm','stgcn'],required=True); ap.add_argument('--out',required=True); ap.add_argument('--epochs',type=int,default=100); ap.add_argument('--patience',type=int,default=15); ap.add_argument('--checkpoint')
+    ap.add_argument('--min-train-state',type=int,default=DEFAULT_MIN_TRAIN_STATE,help='Minimum training examples per criterion state (frozen protocol: 8).')
+    ap.add_argument('--min-val-state',type=int,default=DEFAULT_MIN_VAL_STATE,help='Minimum validation examples per criterion state (frozen protocol: 1).')
+    a=ap.parse_args()
+    d=run(a.exercise,a.target,a.seed,a.model,a.data,epochs=a.epochs,checkpoint=a.checkpoint,patience=a.patience,
+          min_train_state=a.min_train_state,min_val_state=a.min_val_state)
+    Path(a.out).parent.mkdir(parents=True,exist_ok=True); Path(a.out).write_text(json.dumps(d,indent=2)); print(json.dumps(d,indent=2))

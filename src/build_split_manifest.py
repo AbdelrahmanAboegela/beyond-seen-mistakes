@@ -2,8 +2,12 @@
 from __future__ import annotations
 import argparse, hashlib, json
 from pathlib import Path
-from alexgym_data import load_exercise,PREPROCESS_VERSION
-from loco_split import make_loco_split
+try:
+    from .alexgym_data import load_exercise, PREPROCESS_VERSION
+    from .loco_split import make_loco_split
+except ImportError:
+    from alexgym_data import load_exercise, PREPROCESS_VERSION
+    from loco_split import make_loco_split
 
 
 def main():

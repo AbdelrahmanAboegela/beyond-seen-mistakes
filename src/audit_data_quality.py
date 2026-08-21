@@ -59,13 +59,22 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     manifest, rows = {"schema": 1, "data_root": str(root.resolve()), "files": {}}, []
 
+    missing_files = []
     for ex in EXERCISES:
         xlsx = root / f"{ex}.xlsx"
         front_path, lat_path = root / f"front_pose_{ex}.json", root / f"lat_pose_{ex}.json"
         for p in (xlsx, front_path, lat_path):
             if not p.exists():
-                raise FileNotFoundError(p)
-            manifest["files"][str(p.name)] = {"bytes": p.stat().st_size, "sha256": sha256(p)}
+                missing_files.append(p)
+            else:
+                manifest["files"][str(p.name)] = {"bytes": p.stat().st_size, "sha256": sha256(p)}
+    if missing_files:
+        print(f"Audit skipped: Raw dataset files not found in '{root}'. Download ALEX-GYM-1 raw files per data/README.md to run audit.")
+        return
+
+    for ex in EXERCISES:
+        xlsx = root / f"{ex}.xlsx"
+        front_path, lat_path = root / f"front_pose_{ex}.json", root / f"lat_pose_{ex}.json"
         df = pd.read_excel(xlsx)
         with front_path.open(encoding="utf-8") as f:
             front = json.load(f)
