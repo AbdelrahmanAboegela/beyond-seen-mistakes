@@ -15,6 +15,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python scripts/verify_release.py
-      - run: python src/analyze_research_questions.py --out build/rq_stats.json
+      - run: python src/analyze_lop_controls.py --outdir build/lop_controls
+      - run: python src/analyze_matched_composition.py --runs 'results/matched_composition_v2/runs/*.json' --outdir build/matched
+      - run: python src/compose_final_results.py --matched build/matched/stats.json --lop build/lop_controls/stats.json --out build/rq_stats.json
       - run: python scripts/generate_figures.py
-

@@ -1,0 +1,123 @@
+{
+  "per_model": {
+    "fact": {
+      "mean_within_target_rho": -0.6480561755588599,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": 0.00012457005449100856,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    },
+    "gru": {
+      "mean_within_target_rho": -0.517707970072178,
+      "p_one_sided": 3.999920001599968e-05,
+      "n_permutations": 50000,
+      "null_mean": -0.0004667286733689381,
+      "n_informative_targets": 12,
+      "p_two_sided": 7.999840003199936e-05
+    },
+    "ssm": {
+      "mean_within_target_rho": -0.5291627900229416,
+      "p_one_sided": 7.999840003199936e-05,
+      "n_permutations": 50000,
+      "null_mean": -3.780327649892898e-05,
+      "n_informative_targets": 12,
+      "p_two_sided": 0.00015999680006399873
+    },
+    "tcn": {
+      "mean_within_target_rho": -0.5693363428911007,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": 2.5964277099881378e-05,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    },
+    "transformer": {
+      "mean_within_target_rho": -0.36683166673776785,
+      "p_one_sided": 0.0029199416011679766,
+      "n_permutations": 50000,
+      "null_mean": -0.0001348002849037439,
+      "n_informative_targets": 12,
+      "p_two_sided": 0.005839883202335953
+    }
+  },
+  "all_model_mean": {
+    "mean_within_target_rho": -0.6324804937729948,
+    "p_one_sided": 1.999960000799984e-05,
+    "n_permutations": 50000,
+    "null_mean": -0.00034978706568982544,
+    "n_informative_targets": 12,
+    "p_two_sided": 3.999920001599968e-05,
+    "partial_beyond_simple_controls": {
+      "partial_rank_correlation": -0.18233113218392616,
+      "p_two_sided": 0.2002359952800944,
+      "n_target_criterion_units": 67,
+      "n_targets": 12,
+      "controls": [
+        "global_opposing_rate",
+        "target_bit"
+      ],
+      "note": "Target frequency, target cardinality, and total Hamming-1 support are constant within diagnosis and cancel under within-diagnosis ranking."
+    }
+  },
+  "leave_one_model_out": {
+    "fact": {
+      "mean_within_target_rho": -0.5411606006275221,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": -0.00048619609872612145,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    },
+    "gru": {
+      "mean_within_target_rho": -0.6633520319237753,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": -0.00016082171808981362,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    },
+    "ssm": {
+      "mean_within_target_rho": -0.627649068475891,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": -0.00036492536316027485,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    },
+    "tcn": {
+      "mean_within_target_rho": -0.5997543007585856,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": -0.0005271636749799684,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    },
+    "transformer": {
+      "mean_within_target_rho": -0.6353529681726543,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": -0.0002627611454213276,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    }
+  },
+  "controls": {
+    "global_opposing_support": {
+      "mean_within_target_rho": -0.7424785893093744,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": 0.00018810916495814916,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    },
+    "global_opposing_rate": {
+      "mean_within_target_rho": -0.7424785893093744,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": 0.00018810916495814916,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    }
+  }
+}

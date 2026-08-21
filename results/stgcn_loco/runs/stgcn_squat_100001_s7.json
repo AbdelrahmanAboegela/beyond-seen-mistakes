@@ -1,0 +1,128 @@
+{
+  "exercise": "squat",
+  "target": "100001",
+  "seed": 7,
+  "model": "stgcn",
+  "criteria": [
+    "Feet Out 30 F",
+    "Whole Feet Flat On the Floor (1) L",
+    "Bend Hips and Knees Simultaniously (1) L",
+    "Hips backwards (1) L",
+    "Lower back neural (1) L",
+    "Hips are lower than knees level (1 point) L"
+  ],
+  "n_train": 180,
+  "n_val": 50,
+  "n_test": 52,
+  "n_params": 35430,
+  "split_audit": {
+    "target": "100001",
+    "seed": 7,
+    "split_offset": 9,
+    "target_groups": [
+      "1",
+      "105",
+      "107",
+      "109",
+      "11",
+      "111",
+      "13",
+      "31",
+      "33",
+      "53",
+      "57",
+      "61",
+      "63"
+    ],
+    "n_train": 180,
+    "n_val": 50,
+    "n_test": 52,
+    "train_state_counts": [
+      [
+        112,
+        68
+      ],
+      [
+        144,
+        36
+      ],
+      [
+        145,
+        35
+      ],
+      [
+        96,
+        84
+      ],
+      [
+        170,
+        10
+      ],
+      [
+        39,
+        141
+      ]
+    ],
+    "val_state_counts": [
+      [
+        33,
+        17
+      ],
+      [
+        35,
+        15
+      ],
+      [
+        35,
+        15
+      ],
+      [
+        20,
+        30
+      ],
+      [
+        40,
+        10
+      ],
+      [
+        12,
+        38
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.49141133111721347,
+    "micro_f1": 0.6768060836501901,
+    "bit_accuracy": 0.7166666666666667,
+    "exact_match": 0.2,
+    "per_criterion_accuracy": [
+      0.58,
+      0.88,
+      0.7,
+      0.64,
+      0.8,
+      0.7
+    ]
+  },
+  "test": {
+    "macro_f1": 0.3267647153064821,
+    "micro_f1": 0.8032128514056225,
+    "bit_accuracy": 0.842948717948718,
+    "exact_match": 0.19230769230769232,
+    "per_criterion_accuracy": [
+      0.9423076923076923,
+      0.9423076923076923,
+      0.9807692307692307,
+      0.21153846153846154,
+      1.0,
+      0.9807692307692307
+    ]
+  },
+  "epochs": 49,
+  "train_seconds": 41.88786816596985
+}

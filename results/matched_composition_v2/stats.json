@@ -1,0 +1,262 @@
+[
+  {
+    "model": "gru",
+    "metric": "bit_accuracy",
+    "n_targets": 12,
+    "seen_mean": 0.7516666666666668,
+    "unseen_mean": 0.5461728395061728,
+    "seen_minus_unseen": 0.20549382716049389,
+    "bootstrap95": [
+      0.1469444444444445,
+      0.2794753086419753
+    ],
+    "wilcoxon_two_sided": 0.00048828125
+  },
+  {
+    "model": "gru",
+    "metric": "exact_match",
+    "n_targets": 12,
+    "seen_mean": 0.2819444444444444,
+    "unseen_mean": 0.011111111111111112,
+    "seen_minus_unseen": 0.2708333333333333,
+    "bootstrap95": [
+      0.1638888888888889,
+      0.37777777777777777
+    ],
+    "wilcoxon_two_sided": 0.001953125
+  },
+  {
+    "model": "gru",
+    "metric": "macro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.25790417401528515,
+    "unseen_mean": 0.16397707231040562,
+    "seen_minus_unseen": 0.09392710170487949,
+    "bootstrap95": [
+      0.06175034905937683,
+      0.1250455981775426
+    ],
+    "wilcoxon_two_sided": 0.001953125
+  },
+  {
+    "model": "gru",
+    "metric": "micro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.5679002454498154,
+    "unseen_mean": 0.3553973635066125,
+    "seen_minus_unseen": 0.2125028819432028,
+    "bootstrap95": [
+      0.14644201875294272,
+      0.2739032880639154
+    ],
+    "wilcoxon_two_sided": 0.001953125
+  },
+  {
+    "model": "ssm",
+    "metric": "bit_accuracy",
+    "n_targets": 12,
+    "seen_mean": 0.7987654320987655,
+    "unseen_mean": 0.5739197530864197,
+    "seen_minus_unseen": 0.22484567901234565,
+    "bootstrap95": [
+      0.1585185185185185,
+      0.3109884259259258
+    ],
+    "wilcoxon_two_sided": 0.00048828125
+  },
+  {
+    "model": "ssm",
+    "metric": "exact_match",
+    "n_targets": 12,
+    "seen_mean": 0.35324074074074074,
+    "unseen_mean": 0.038425925925925926,
+    "seen_minus_unseen": 0.3148148148148148,
+    "bootstrap95": [
+      0.19814814814814816,
+      0.4398148148148147
+    ],
+    "wilcoxon_two_sided": 0.0009765625
+  },
+  {
+    "model": "ssm",
+    "metric": "macro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.258343621399177,
+    "unseen_mean": 0.1680482069370958,
+    "seen_minus_unseen": 0.09029541446208116,
+    "bootstrap95": [
+      0.04627057613168726,
+      0.1386633230452675
+    ],
+    "wilcoxon_two_sided": 0.00390625
+  },
+  {
+    "model": "ssm",
+    "metric": "micro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.5962838334970418,
+    "unseen_mean": 0.3691338258430929,
+    "seen_minus_unseen": 0.22715000765394902,
+    "bootstrap95": [
+      0.13088119505817752,
+      0.33708792994612424
+    ],
+    "wilcoxon_two_sided": 0.001953125
+  },
+  {
+    "model": "tcn",
+    "metric": "bit_accuracy",
+    "n_targets": 12,
+    "seen_mean": 0.730679012345679,
+    "unseen_mean": 0.5533179012345679,
+    "seen_minus_unseen": 0.1773611111111111,
+    "bootstrap95": [
+      0.09854938271604939,
+      0.25999999999999995
+    ],
+    "wilcoxon_two_sided": 0.00146484375
+  },
+  {
+    "model": "tcn",
+    "metric": "exact_match",
+    "n_targets": 12,
+    "seen_mean": 0.20324074074074072,
+    "unseen_mean": 0.0,
+    "seen_minus_unseen": 0.20324074074074072,
+    "bootstrap95": [
+      0.13842592592592592,
+      0.2671296296296296
+    ],
+    "wilcoxon_two_sided": 0.0009765625
+  },
+  {
+    "model": "tcn",
+    "metric": "macro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.260787771898883,
+    "unseen_mean": 0.1879049088771311,
+    "seen_minus_unseen": 0.07288286302175191,
+    "bootstrap95": [
+      0.029522835831863624,
+      0.12155939520870075
+    ],
+    "wilcoxon_two_sided": 0.005859375
+  },
+  {
+    "model": "tcn",
+    "metric": "micro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.550730412903054,
+    "unseen_mean": 0.3816677452298367,
+    "seen_minus_unseen": 0.16906266767321734,
+    "bootstrap95": [
+      0.07547781227504492,
+      0.2615817561426206
+    ],
+    "wilcoxon_two_sided": 0.005859375
+  },
+  {
+    "model": "transformer",
+    "metric": "bit_accuracy",
+    "n_targets": 12,
+    "seen_mean": 0.7233179012345677,
+    "unseen_mean": 0.5679166666666667,
+    "seen_minus_unseen": 0.1554012345679012,
+    "bootstrap95": [
+      0.07975308641975305,
+      0.2366666666666666
+    ],
+    "wilcoxon_two_sided": 0.00341796875
+  },
+  {
+    "model": "transformer",
+    "metric": "exact_match",
+    "n_targets": 12,
+    "seen_mean": 0.23981481481481481,
+    "unseen_mean": 0.011111111111111112,
+    "seen_minus_unseen": 0.22870370370370371,
+    "bootstrap95": [
+      0.11805555555555557,
+      0.3569560185185159
+    ],
+    "wilcoxon_two_sided": 0.001953125
+  },
+  {
+    "model": "transformer",
+    "metric": "macro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.2525132275132275,
+    "unseen_mean": 0.18502131099353322,
+    "seen_minus_unseen": 0.06749191651969431,
+    "bootstrap95": [
+      0.018574129188712526,
+      0.12807618680188126
+    ],
+    "wilcoxon_two_sided": 0.05078125
+  },
+  {
+    "model": "transformer",
+    "metric": "micro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.5335741500185011,
+    "unseen_mean": 0.3986143042015487,
+    "seen_minus_unseen": 0.13495984581695242,
+    "bootstrap95": [
+      0.05665185371699601,
+      0.22272131212096286
+    ],
+    "wilcoxon_two_sided": 0.01171875
+  },
+  {
+    "model": "model_mean",
+    "metric": "bit_accuracy",
+    "n_targets": 12,
+    "seen_mean": 0.7511072530864197,
+    "unseen_mean": 0.5603317901234569,
+    "seen_minus_unseen": 0.1907754629629629,
+    "bootstrap95": [
+      0.13619974922839503,
+      0.2610340470679012
+    ],
+    "wilcoxon_two_sided": 0.00048828125
+  },
+  {
+    "model": "model_mean",
+    "metric": "exact_match",
+    "n_targets": 12,
+    "seen_mean": 0.26956018518518515,
+    "unseen_mean": 0.015162037037037036,
+    "seen_minus_unseen": 0.25439814814814815,
+    "bootstrap95": [
+      0.17314814814814813,
+      0.3332175925925926
+    ],
+    "wilcoxon_two_sided": 0.00048828125
+  },
+  {
+    "model": "model_mean",
+    "metric": "macro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.25738719870664317,
+    "unseen_mean": 0.17623787477954145,
+    "seen_minus_unseen": 0.0811493239271017,
+    "bootstrap95": [
+      0.047951572604350366,
+      0.11530099022633744
+    ],
+    "wilcoxon_two_sided": 0.001953125
+  },
+  {
+    "model": "model_mean",
+    "metric": "micro_f1",
+    "n_targets": 12,
+    "seen_mean": 0.5621221604671032,
+    "unseen_mean": 0.37620330969527266,
+    "seen_minus_unseen": 0.18591885077183037,
+    "bootstrap95": [
+      0.12320478910323274,
+      0.2519547465779795
+    ],
+    "wilcoxon_two_sided": 0.001953125
+  }
+]

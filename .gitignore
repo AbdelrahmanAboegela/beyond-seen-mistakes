@@ -7,6 +7,8 @@ build/
 cache/
 checkpoints/
 results/reproduction/
+results/matched_composition/
+results/matched_composition_v2/interim_tcn/
 data/*
 !data/README.md
 paper/*.aux
@@ -18,3 +20,6 @@ paper/*.synctex.gz
 paper/main.pdf
 .DS_Store
 Thumbs.db
+build_page-*.png
+final_page-*.png
+balanced-*.png

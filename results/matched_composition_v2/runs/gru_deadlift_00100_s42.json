@@ -1,0 +1,172 @@
+{
+  "exercise": "deadlift",
+  "target": "00100",
+  "seed": 42,
+  "model": "gru",
+  "criteria": [
+    "Balance (0.5 point) F",
+    "Straight back (0.5) L",
+    "Full back leg extended (0.5 point) L",
+    "Slow reverse movement (0.5 point) L",
+    "Support knee\u00a0bend\u00a015-20\u00b0 (0.5 point) L"
+  ],
+  "split_audit": {
+    "target": "00100",
+    "seed": 42,
+    "test_group": "83",
+    "remaining_target_groups": [
+      "21",
+      "23",
+      "29",
+      "59",
+      "71",
+      "9"
+    ],
+    "split_offset": 308,
+    "n_train_each": 200,
+    "n_target_rows_added": 17,
+    "n_non_target_rows_exchanged": 17,
+    "n_val": 47,
+    "n_test": 5,
+    "seen_train_state_counts": [
+      [
+        175,
+        25
+      ],
+      [
+        182,
+        18
+      ],
+      [
+        123,
+        77
+      ],
+      [
+        95,
+        105
+      ],
+      [
+        191,
+        9
+      ]
+    ],
+    "unseen_train_state_counts": [
+      [
+        175,
+        25
+      ],
+      [
+        179,
+        21
+      ],
+      [
+        136,
+        64
+      ],
+      [
+        82,
+        118
+      ],
+      [
+        191,
+        9
+      ]
+    ],
+    "val_state_counts": [
+      [
+        34,
+        13
+      ],
+      [
+        32,
+        15
+      ],
+      [
+        32,
+        15
+      ],
+      [
+        16,
+        31
+      ],
+      [
+        38,
+        9
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "shared_pos_weight": [
+    7.679999828338623,
+    8.0,
+    1.6790122985839844,
+    0.8389830589294434,
+    8.0
+  ],
+  "seen": {
+    "val": {
+      "macro_f1": 0.32960317460317456,
+      "micro_f1": 0.5102040816326531,
+      "bit_accuracy": 0.5914893617021276,
+      "exact_match": 0.0,
+      "per_criterion_accuracy": [
+        0.3617021276595745,
+        0.6808510638297872,
+        0.3617021276595745,
+        0.7446808510638298,
+        0.8085106382978723
+      ]
+    },
+    "test": {
+      "macro_f1": 0.0,
+      "micro_f1": 0.0,
+      "bit_accuracy": 0.44,
+      "exact_match": 0.0,
+      "per_criterion_accuracy": [
+        1.0,
+        0.2,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "epochs": 21,
+    "train_seconds": 3.2374320030212402,
+    "n_params": 98969
+  },
+  "unseen": {
+    "val": {
+      "macro_f1": 0.4006060606060606,
+      "micro_f1": 0.5423728813559322,
+      "bit_accuracy": 0.6553191489361702,
+      "exact_match": 0.0425531914893617,
+      "per_criterion_accuracy": [
+        0.5106382978723404,
+        0.574468085106383,
+        0.6808510638297872,
+        0.7021276595744681,
+        0.8085106382978723
+      ]
+    },
+    "test": {
+      "macro_f1": 0.0,
+      "micro_f1": 0.0,
+      "bit_accuracy": 0.4,
+      "exact_match": 0.0,
+      "per_criterion_accuracy": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "epochs": 21,
+    "train_seconds": 2.920046091079712,
+    "n_params": 98969
+  }
+}

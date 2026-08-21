@@ -49,9 +49,27 @@ def rq2() -> None:
     plt.close(fig)
 
 
+def matched() -> None:
+    df = pd.read_csv(ROOT / "results/matched_composition_v2/target_mean_metrics.csv", dtype={"target": str})
+    q = df[df.metric == "exact_match"]
+    means = q.groupby(["model", "condition"]).value.mean().unstack().reindex(MODELS[:4]) * 100
+    fig, ax = plt.subplots(figsize=(5.1, 2.8))
+    x = range(4)
+    ax.bar([i - .18 for i in x], means.seen, width=.36, label="Target seen in training", color="#3f7f93")
+    ax.bar([i + .18 for i in x], means.unseen, width=.36, label="Target absent from training", color="#d66b55")
+    ax.set_xticks(list(x), LABELS[:4])
+    ax.set_ylabel("Exact diagnosis match (%)")
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.legend(frameon=False, fontsize=8)
+    fig.tight_layout()
+    fig.savefig(OUT / "matched_exact.pdf", bbox_inches="tight")
+    fig.savefig(OUT / "matched_exact.png", dpi=220, bbox_inches="tight")
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rq1()
     rq2()
+    matched()
     print(f"Wrote figures to {OUT}")
-

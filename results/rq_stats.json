@@ -1,45 +1,88 @@
 {
-  "primary_tests": {
-    "H1_exact_match_gap": {
+  "protocol_version": "matched-composition-v2-shared-class-weights",
+  "statistical_unit": "held-out natural diagnosis (12 targets)",
+  "primary": {
+    "RQ1_matched_exact_match": {
+      "model": "model_mean",
+      "metric": "exact_match",
       "n_targets": 12,
-      "mean_validation_minus_loco": 0.11336171781452319,
+      "seen_mean": 0.26956018518518515,
+      "unseen_mean": 0.015162037037037036,
+      "seen_minus_unseen": 0.25439814814814815,
       "bootstrap95": [
-        0.08086937395451639,
-        0.14542317920585077
+        0.17314814814814813,
+        0.3332175925925926
       ],
-      "wilcoxon_two_sided": 0.00048828125,
-      "holm_p": 0.0009765625
-    },
-    "H2_pressure_accuracy": {
-      "mean_within_target_rho": -0.6507475231012901,
-      "p_one_sided": 1.999960000799984e-05,
-      "n_permutations": 50000,
-      "null_mean": 0.0013072050270076544,
-      "n_informative_targets": 12,
-      "p_two_sided": 3.999920001599968e-05,
-      "holm_p": 0.00011999760004799905
-    },
-    "H3_lmr_error_auprc": {
-      "n_targets": 12,
-      "mean_error_auprc_gain": 0.04991268362145934,
-      "bootstrap95": [
-        -0.0014772358974419518,
-        0.10260796009902906
-      ],
-      "wilcoxon_two_sided": 0.09228515625,
-      "holm_p": 0.09228515625
+      "wilcoxon_two_sided": 0.00048828125
     }
   },
   "secondary": {
-    "H1_bit_accuracy_gap": {
+    "RQ1_matched_bit_accuracy": {
+      "model": "model_mean",
+      "metric": "bit_accuracy",
       "n_targets": 12,
-      "mean_validation_minus_loco": 0.04610717250433901,
+      "seen_mean": 0.7511072530864197,
+      "unseen_mean": 0.5603317901234569,
+      "seen_minus_unseen": 0.1907754629629629,
       "bootstrap95": [
-        0.002520612334885864,
-        0.0973679205622134
+        0.13619974922839503,
+        0.2610340470679012
       ],
-      "wilcoxon_two_sided": 0.1513671875
+      "wilcoxon_two_sided": 0.00048828125
+    },
+    "RQ1_matched_micro_f1": {
+      "model": "model_mean",
+      "metric": "micro_f1",
+      "n_targets": 12,
+      "seen_mean": 0.5621221604671032,
+      "unseen_mean": 0.37620330969527266,
+      "seen_minus_unseen": 0.18591885077183037,
+      "bootstrap95": [
+        0.12320478910323274,
+        0.2519547465779795
+      ],
+      "wilcoxon_two_sided": 0.001953125
     }
   },
-  "statistical_unit": "held-out natural composition (12 targets)"
+  "diagnostic": {
+    "RQ2_raw_lop": {
+      "mean_within_target_rho": -0.6324804937729948,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": -0.00034978706568982544,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05,
+      "partial_beyond_simple_controls": {
+        "partial_rank_correlation": -0.18233113218392616,
+        "p_two_sided": 0.2002359952800944,
+        "n_target_criterion_units": 67,
+        "n_targets": 12,
+        "controls": [
+          "global_opposing_rate",
+          "target_bit"
+        ],
+        "note": "Target frequency, target cardinality, and total Hamming-1 support are constant within diagnosis and cancel under within-diagnosis ranking."
+      }
+    },
+    "RQ2_global_opposing_support": {
+      "mean_within_target_rho": -0.7424785893093744,
+      "p_one_sided": 1.999960000799984e-05,
+      "n_permutations": 50000,
+      "null_mean": 0.00018810916495814916,
+      "n_informative_targets": 12,
+      "p_two_sided": 3.999920001599968e-05
+    },
+    "RQ2_lop_partial_beyond_support_and_target_bit": {
+      "partial_rank_correlation": -0.18233113218392616,
+      "p_two_sided": 0.2002359952800944,
+      "n_target_criterion_units": 67,
+      "n_targets": 12,
+      "controls": [
+        "global_opposing_rate",
+        "target_bit"
+      ],
+      "note": "Target frequency, target cardinality, and total Hamming-1 support are constant within diagnosis and cancel under within-diagnosis ranking."
+    }
+  },
+  "inference_note": "Exact match was the sole primary endpoint before the corrected v2 rerun; all reported probabilities are two-sided."
 }

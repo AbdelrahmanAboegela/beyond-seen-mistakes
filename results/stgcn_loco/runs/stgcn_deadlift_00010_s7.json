@@ -1,0 +1,122 @@
+{
+  "exercise": "deadlift",
+  "target": "00010",
+  "seed": 7,
+  "model": "stgcn",
+  "criteria": [
+    "Balance (0.5 point) F",
+    "Straight back (0.5) L",
+    "Full back leg extended (0.5 point) L",
+    "Slow reverse movement (0.5 point) L",
+    "Support knee\u00a0bend\u00a015-20\u00b0 (0.5 point) L"
+  ],
+  "n_train": 142,
+  "n_val": 39,
+  "n_test": 66,
+  "n_params": 35381,
+  "split_audit": {
+    "target": "00010",
+    "seed": 7,
+    "split_offset": 357,
+    "target_groups": [
+      "11",
+      "15",
+      "17",
+      "27",
+      "3",
+      "31",
+      "37",
+      "41",
+      "43",
+      "45",
+      "47",
+      "55",
+      "57",
+      "63",
+      "67",
+      "75",
+      "79",
+      "85"
+    ],
+    "n_train": 142,
+    "n_val": 39,
+    "n_test": 66,
+    "train_state_counts": [
+      [
+        120,
+        22
+      ],
+      [
+        119,
+        23
+      ],
+      [
+        66,
+        76
+      ],
+      [
+        79,
+        63
+      ],
+      [
+        133,
+        9
+      ]
+    ],
+    "val_state_counts": [
+      [
+        29,
+        10
+      ],
+      [
+        29,
+        10
+      ],
+      [
+        17,
+        22
+      ],
+      [
+        29,
+        10
+      ],
+      [
+        30,
+        9
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "val": {
+    "macro_f1": 0.29397658079625294,
+    "micro_f1": 0.47619047619047616,
+    "bit_accuracy": 0.6051282051282051,
+    "exact_match": 0.0,
+    "per_criterion_accuracy": [
+      0.7435897435897436,
+      0.38461538461538464,
+      0.5641025641025641,
+      0.5641025641025641,
+      0.7692307692307693
+    ]
+  },
+  "test": {
+    "macro_f1": 0.09302325581395349,
+    "micro_f1": 0.19704433497536947,
+    "bit_accuracy": 0.5060606060606061,
+    "exact_match": 0.0,
+    "per_criterion_accuracy": [
+      1.0,
+      0.19696969696969696,
+      0.030303030303030304,
+      0.30303030303030304,
+      1.0
+    ]
+  },
+  "epochs": 17,
+  "train_seconds": 12.002099752426147
+}

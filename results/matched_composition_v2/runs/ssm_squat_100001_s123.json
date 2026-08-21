@@ -1,0 +1,196 @@
+{
+  "exercise": "squat",
+  "target": "100001",
+  "seed": 123,
+  "model": "ssm",
+  "criteria": [
+    "Feet Out 30 F",
+    "Whole Feet Flat On the Floor (1) L",
+    "Bend Hips and Knees Simultaniously (1) L",
+    "Hips backwards (1) L",
+    "Lower back neural (1) L",
+    "Hips are lower than knees level (1 point) L"
+  ],
+  "split_audit": {
+    "target": "100001",
+    "seed": 123,
+    "test_group": "53",
+    "remaining_target_groups": [
+      "1",
+      "105",
+      "107",
+      "109",
+      "11",
+      "111",
+      "13",
+      "31",
+      "33",
+      "57",
+      "61",
+      "63"
+    ],
+    "split_offset": 306,
+    "n_train_each": 192,
+    "n_target_rows_added": 47,
+    "n_non_target_rows_exchanged": 47,
+    "n_val": 50,
+    "n_test": 5,
+    "seen_train_state_counts": [
+      [
+        88,
+        104
+      ],
+      [
+        158,
+        34
+      ],
+      [
+        162,
+        30
+      ],
+      [
+        126,
+        66
+      ],
+      [
+        182,
+        10
+      ],
+      [
+        22,
+        170
+      ]
+    ],
+    "unseen_train_state_counts": [
+      [
+        113,
+        79
+      ],
+      [
+        146,
+        46
+      ],
+      [
+        152,
+        40
+      ],
+      [
+        98,
+        94
+      ],
+      [
+        182,
+        10
+      ],
+      [
+        28,
+        164
+      ]
+    ],
+    "val_state_counts": [
+      [
+        39,
+        11
+      ],
+      [
+        40,
+        10
+      ],
+      [
+        40,
+        10
+      ],
+      [
+        30,
+        20
+      ],
+      [
+        40,
+        10
+      ],
+      [
+        23,
+        27
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    }
+  },
+  "shared_pos_weight": [
+    0.89682537317276,
+    4.195652008056641,
+    4.974999904632568,
+    1.542553186416626,
+    8.0,
+    0.25
+  ],
+  "seen": {
+    "val": {
+      "macro_f1": 0.44562395302984265,
+      "micro_f1": 0.5022421524663677,
+      "bit_accuracy": 0.63,
+      "exact_match": 0.12,
+      "per_criterion_accuracy": [
+        0.48,
+        0.72,
+        0.62,
+        0.78,
+        0.64,
+        0.54
+      ]
+    },
+    "test": {
+      "macro_f1": 0.3333333333333333,
+      "micro_f1": 0.9090909090909091,
+      "bit_accuracy": 0.9333333333333333,
+      "exact_match": 0.6,
+      "per_criterion_accuracy": [
+        1.0,
+        0.6,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "epochs": 24,
+    "train_seconds": 3.4718077182769775,
+    "n_params": 13394
+  },
+  "unseen": {
+    "val": {
+      "macro_f1": 0.4948309414690564,
+      "micro_f1": 0.5911330049261084,
+      "bit_accuracy": 0.7233333333333334,
+      "exact_match": 0.18,
+      "per_criterion_accuracy": [
+        0.7,
+        0.64,
+        0.76,
+        0.82,
+        0.84,
+        0.58
+      ]
+    },
+    "test": {
+      "macro_f1": 0.1111111111111111,
+      "micro_f1": 0.25,
+      "bit_accuracy": 0.6,
+      "exact_match": 0.0,
+      "per_criterion_accuracy": [
+        0.2,
+        0.6,
+        1.0,
+        0.6,
+        1.0,
+        0.2
+      ]
+    },
+    "epochs": 55,
+    "train_seconds": 7.772582054138184,
+    "n_params": 13394
+  }
+}

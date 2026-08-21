@@ -10,18 +10,20 @@
 - Input: paired frontal/lateral 33-joint 3D poses, interpolated for whole missing frames, pelvis-centered, robust-scale normalized, and resampled to 16 frames.
 - Threshold: fixed at 0.5; no test-fold calibration.
 
-The exact split indices are frozen in `configs/split_manifest_v2.json`.
+The exact split indices are frozen in `configs/split_manifest_v2.json` and `configs/matched_manifest_v2.json`.
 
 ## Reproduce reported statistics without the dataset
 
 ```bash
 python src/aggregate_runs.py
-python src/analyze_research_questions.py
+python src/analyze_lop_controls.py
+python src/analyze_matched_composition.py --runs 'results/matched_composition_v2/runs/*.json' --outdir results/matched_composition_v2
+python src/compose_final_results.py
 python scripts/generate_figures.py
 python scripts/verify_release.py
 ```
 
-The RQ2 blocked permutation uses 50,000 randomizations and shuffles target-bit accuracy within each held-out diagnosis. This preserves criterion dependence inside diagnoses and avoids treating 67 criterion rows as independent.
+The RQ2 blocked permutation uses 50,000 randomizations and shuffles predictors within each held-out diagnosis. This preserves criterion dependence and avoids treating 67 criterion rows as independent. The matched v2 protocol uses shared class weights in both conditions.
 
 ## Retrain
 
@@ -30,8 +32,14 @@ After following `data/README.md`:
 ```bash
 python src/run_context_evidence_sweep.py \
   --models tcn,gru,transformer,ssm,fact \
-  --seeds 7,42,123 \
   --outdir results/reproduction
+```
+
+Run the matched v2 comparison and graph baseline separately:
+
+```bash
+python src/run_matched_sweep.py --models tcn,gru,transformer,ssm --outdir results/matched_composition_v2
+python src/run_context_evidence_sweep.py --models stgcn --outdir results/stgcn_loco
 ```
 
 Training is intentionally a fixed-budget reproduction, not a hyperparameter sweep. The default FACT configuration uses AdamW, learning rate 0.0015, weight decay 0.0002, batch size 32, up to 55 epochs, and patience 9.
@@ -43,4 +51,3 @@ From `paper/`, run `pdflatex main.tex`, `bibtex main`, then `pdflatex main.tex` 
 ## Claim boundaries
 
 This release tests recording-pair-disjoint natural error-composition shift on one dataset. It does not establish participant-disjoint generalization, causal reliance, universal FACT superiority, or external-dataset replication.
-
