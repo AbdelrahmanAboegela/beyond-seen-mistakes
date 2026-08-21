@@ -17,8 +17,8 @@ Each node is a naturally observed multi-error diagnosis, node area is frequency,
 
 | Question | Result | Interpretation |
 |---|---:|---|
-| **RQ1.** Does removing a diagnosis from matched training reduce performance on the same test recordings? | Exact match: **26.96% → 1.52%**, gap 25.44 pp, 95% CI [17.31, 33.32], *p*=.00049 | Yes, across TCN, GRU, Transformer and SSM. |
-| Secondary criterion outcome | Bit accuracy drops **19.08 pp**, CI [13.62, 26.10], *p*=.00049 | The failure is not only an exact-match artifact. |
+| **RQ1.** Does removing a diagnosis from matched training reduce performance on the same test recordings? | Optimized exchange exact match: **22.65% → 1.52%**, gap 21.13 pp, 95% CI [9.86, 34.73], *p*=.00049 | Yes, across TCN, GRU, Transformer and SSM. |
+| Secondary criterion outcome | Bit accuracy drops **12.80 pp**, CI [7.38, 18.79], *p*=.00049 | The failure is not only an exact-match artifact. |
 | **RQ2.** Does local label opposition add information beyond marginal support? | Raw LOP ρ=-.632; global support ρ=-.742; partial LOP *p*=.200 | No reliable incremental effect; marginal criterion support is the stronger diagnostic. |
 
 The contribution is the **matched observed-composition protocol and controlled effect**, not a claim that FACT is universally superior. The negative LOP control and earlier null supplemental result are deliberately public.
@@ -33,6 +33,9 @@ For each naturally observed diagnosis vector `y*`:
 2. Remove the complete paired-recording group of each test repetition from training and validation.
 3. Split the remaining groups deterministically, accepting a fold only when both states of every criterion have ≥8 training examples and ≥1 validation example.
 4. For the matched test, keep validation/test rows, initialization, class weights and training size identical; exchange target-diagnosis rows for the same number of non-target rows.
+5. Select exchanged rows with a deterministic binary optimization: minimize the worst criterion-positive count mismatch, then the total mismatch. Exact equality is impossible because every non-target row differs from the target in at least one bit.
+
+This optimization reduces the fold-mean worst mismatch from 22.06 to 10.89 counts and total mismatch from 55.08 to 33.42. Residual imbalance remains, so the result supports a robust association—not a causal interpretation. The earlier random-exchange estimate (25.44 pp exact-match gap) is retained as a compatibility check.
 
 The final protocol has 7 squat and 5 deadlift targets. Lunge remains in the data audit but has no target that satisfies the frozen support rule. The grouping identifier pairs frontal and lateral recordings; it is **not a verified participant ID**.
 
@@ -61,11 +64,12 @@ Metrics have distinct meanings:
 ## Repository map
 
 ```text
-configs/          frozen LOCO and matched-v2 exact split manifests
+configs/          frozen LOCO, random-v2, and optimized-v3 split manifests
 data/             setup instructions only; dataset is not redistributed
 paper/            submission PDF, LaTeX source, and figures
 results/runs/     original 180 per-run JSON records
 results/matched_composition_v2/ 144 paired matched-test records
+results/matched_composition_v3_optimized/ 144 optimized-exchange records and balance audit
 results/stgcn_loco/ 36 graph-baseline stress-test records
 results/context/  aggregated metrics and LOP analysis
 results/data_audit/ provenance and missing-pose audit
@@ -89,7 +93,7 @@ No dataset or GPU is needed to reproduce the reported statistics and plots:
 ```bash
 python src/aggregate_runs.py
 python src/analyze_lop_controls.py
-python src/analyze_matched_composition.py --runs 'results/matched_composition_v2/runs/*.json' --outdir results/matched_composition_v2
+python src/analyze_matched_composition.py --runs 'results/matched_composition_v3_optimized/runs/*.json' --outdir results/matched_composition_v3_optimized
 python src/compose_final_results.py
 python scripts/generate_figures.py
 ```
@@ -105,7 +109,9 @@ python src/run_context_evidence_sweep.py \
 The two new controlled additions are reproduced with:
 
 ```bash
-python src/run_matched_sweep.py --models tcn,gru,transformer,ssm
+python src/run_matched_sweep.py --models tcn,gru,transformer,ssm \
+  --manifest configs/matched_manifest_v2.json \
+  --outdir results/matched_composition_v3_optimized
 python src/run_context_evidence_sweep.py --models stgcn --outdir results/stgcn_loco
 ```
 

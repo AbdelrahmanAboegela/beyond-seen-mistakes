@@ -50,7 +50,7 @@ def rq2() -> None:
 
 
 def matched() -> None:
-    df = pd.read_csv(ROOT / "results/matched_composition_v2/target_mean_metrics.csv", dtype={"target": str})
+    df = pd.read_csv(ROOT / "results/matched_composition_v3_optimized/target_mean_metrics.csv", dtype={"target": str})
     q = df[df.metric == "exact_match"]
     means = q.groupby(["model", "condition"]).value.mean().unstack().reindex(MODELS[:4]) * 100
     fig, ax = plt.subplots(figsize=(5.1, 2.8))

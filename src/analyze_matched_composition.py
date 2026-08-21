@@ -18,9 +18,12 @@ def bootstrap(x, n=100000, seed=20260821):
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--runs", default="results/matched_composition/runs/*.json")
     ap.add_argument("--outdir", default="results/matched_composition"); args = ap.parse_args()
-    rows = []
+    rows, audits = [], {}
     for path in glob.glob(args.runs):
         d = json.loads(Path(path).read_text())
+        key = (d["exercise"], str(d["target"]), int(d["seed"]))
+        if "optimization" in d.get("split_audit", {}):
+            audits[key] = d["split_audit"]
         for condition in ("seen", "unseen"):
             for metric, value in d[condition]["test"].items():
                 if isinstance(value, (int, float)):
@@ -46,7 +49,30 @@ def main():
                       "seen_mean": float(z.seen.mean()), "unseen_mean": float(z.unseen.mean()),
                       "seen_minus_unseen": float(delta.mean()), "bootstrap95": bootstrap(delta),
                       "wilcoxon_two_sided": float(wilcoxon(delta, zero_method="zsplit").pvalue)})
-    (out / "stats.json").write_text(json.dumps(stats, indent=2)); print(json.dumps(stats, indent=2))
+    (out / "stats.json").write_text(json.dumps(stats, indent=2))
+    if audits:
+        balance_rows = []
+        for (exercise, target_name, seed), audit in sorted(audits.items()):
+            balance_rows.append({
+                "exercise": exercise, "target": target_name, "seed": seed,
+                "n_exchange": audit["n_non_target_rows_exchanged"],
+                "random_max": audit["random_v2_max_positive_count_difference"],
+                "optimized_max": audit["optimized_max_positive_count_difference"],
+                "random_l1": audit["random_v2_l1_positive_count_difference"],
+                "optimized_l1": audit["optimized_l1_positive_count_difference"],
+            })
+        balance = pd.DataFrame(balance_rows)
+        balance.to_csv(out / "balance_audit.csv", index=False)
+        summary = {"n_folds": len(balance)}
+        for metric in ("max", "l1"):
+            before, after = balance[f"random_{metric}"], balance[f"optimized_{metric}"]
+            summary[metric] = {
+                "random_mean": float(before.mean()), "optimized_mean": float(after.mean()),
+                "mean_reduction_fraction": float(1 - after.mean() / before.mean()),
+                "random_max": int(before.max()), "optimized_max": int(after.max()),
+            }
+        (out / "balance_summary.json").write_text(json.dumps(summary, indent=2))
+    print(json.dumps(stats, indent=2))
 
 
 if __name__ == "__main__":

@@ -1,17 +1,17 @@
 {
-  "protocol_version": "matched-composition-v2-shared-class-weights",
+  "protocol_version": "matched-composition-v3-optimized-marginals",
   "statistical_unit": "held-out natural diagnosis (12 targets)",
   "primary": {
     "RQ1_matched_exact_match": {
       "model": "model_mean",
       "metric": "exact_match",
       "n_targets": 12,
-      "seen_mean": 0.26956018518518515,
+      "seen_mean": 0.2265046296296296,
       "unseen_mean": 0.015162037037037036,
-      "seen_minus_unseen": 0.25439814814814815,
+      "seen_minus_unseen": 0.21134259259259258,
       "bootstrap95": [
-        0.17314814814814813,
-        0.3332175925925926
+        0.0986111111111111,
+        0.34733796296296293
       ],
       "wilcoxon_two_sided": 0.00048828125
     }
@@ -21,12 +21,12 @@
       "model": "model_mean",
       "metric": "bit_accuracy",
       "n_targets": 12,
-      "seen_mean": 0.7511072530864197,
+      "seen_mean": 0.6883179012345679,
       "unseen_mean": 0.5603317901234569,
-      "seen_minus_unseen": 0.1907754629629629,
+      "seen_minus_unseen": 0.1279861111111111,
       "bootstrap95": [
-        0.13619974922839503,
-        0.2610340470679012
+        0.07379629629629633,
+        0.1879012345679012
       ],
       "wilcoxon_two_sided": 0.00048828125
     },
@@ -34,12 +34,12 @@
       "model": "model_mean",
       "metric": "micro_f1",
       "n_targets": 12,
-      "seen_mean": 0.5621221604671032,
+      "seen_mean": 0.5106013670689508,
       "unseen_mean": 0.37620330969527266,
-      "seen_minus_unseen": 0.18591885077183037,
+      "seen_minus_unseen": 0.13439805737367813,
       "bootstrap95": [
-        0.12320478910323274,
-        0.2519547465779795
+        0.07242061544920093,
+        0.20145827078907924
       ],
       "wilcoxon_two_sided": 0.001953125
     }
@@ -84,5 +84,5 @@
       "note": "Target frequency, target cardinality, and total Hamming-1 support are constant within diagnosis and cancel under within-diagnosis ranking."
     }
   },
-  "inference_note": "Exact match was the sole primary endpoint before the corrected v2 rerun; all reported probabilities are two-sided."
+  "inference_note": "Exact match was fixed before the v2 and optimized-v3 reruns. The v3 exchange optimization was specified before inspecting v3 model outcomes; all probabilities are two-sided."
 }

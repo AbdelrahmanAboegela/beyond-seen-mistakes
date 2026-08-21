@@ -26,9 +26,10 @@ in training. We introduce a recording-pair-disjoint matched test on public
 ALEX-GYM-1 poses. For each of 12 natural diagnoses, target-present and
 target-absent models use identical test recordings, validation data,
 initialization, class weights, and training-set size. Across TCN, BiGRU,
-Transformer, and state-space backbones, removing target-diagnosis examples lowers
-exact diagnosis match from 26.96\% to 1.52\% (target bootstrap gap 25.44 points,
-95\% CI $[17.31,33.32]$; two-sided $p=.00049$); bit accuracy falls 19.08 points.
+Transformer, and state-space backbones, an optimized exchange minimizes residual
+criterion-marginal differences. Removing target-diagnosis examples then lowers
+exact diagnosis match from 22.65\% to 1.52\% (target bootstrap gap 21.13 points,
+95\% CI $[9.86,34.73]$; two-sided $p=.00049$); bit accuracy falls 12.80 points.
 A six-model stress test, including ST-GCN and an anatomical-token model, shows
 that topology and locality do not eliminate the failure. A label-space audit
 finds that one-bit opposing neighbors predict vulnerable criteria across models,
@@ -180,9 +181,14 @@ recording group is test-only; the three seeds select distinct groups. Validation
 uses groups containing no target repetition. The \emph{present} training set
 contains target repetitions from the remaining target groups. The \emph{absent}
 set exchanges those rows for an equal number of non-target rows from the same
-training-group pool. Thus the conditions have identical size, validation and
-test rows, initialization, class weights, and zero group overlap; only the target
-diagnosis is present versus absent. This test uses four generic temporal
+training-group pool. Because every eligible replacement differs from the target
+in at least one bit, exact criterion-marginal equality is impossible. Before
+training, a deterministic binary optimization therefore minimizes the largest
+per-criterion positive-count difference and then their sum. Relative to random
+exchange, their fold-mean maximum falls from 22.06 to 10.89 counts and their
+total from 55.08 to 33.42. Thus the conditions have identical size, validation
+and test rows, initialization, shared class weights, and zero group overlap,
+with reduced but nonzero marginal differences. This test uses four generic temporal
 backbones and averages seeds, then models, within each diagnosis.
 
 \subsection{Models and training}
@@ -244,22 +250,27 @@ diagnosis, and take the raw diagnosis-equal mean across 67 target--criterion uni
 A 50,000-shuffle test permutes a predictor only among criteria of the same
 diagnosis. A partial rank test residualizes LOP and accuracy against $G_c$ and
 target-bit state before applying the same blocked permutation. We report
-100,000-sample target bootstrap intervals and two-sided probabilities.
+100,000-sample target bootstrap intervals and two-sided probabilities. Exact
+match was fixed before both corrected reruns; the exchange optimization was
+specified before examining its model outcomes.
 
 \section{Results}
 \subsection{RQ1: matched removal exposes diagnosis dependence}
-Under matched test recordings, target-present exact match is 26.96\%, versus
-1.52\% when the target is absent from training: a 25.44-point gap (95\% CI
-$[17.31,33.32]$; two-sided Wilcoxon $p=.00049$). The gap is positive for every
-architecture (20.32 TCN, 27.08 BiGRU, 22.87 Transformer, and 31.48 SSM points).
-Bit accuracy also falls 19.08 points (CI $[13.62,26.10]$; $p=.00049$). RQ1 is
-therefore supported without comparing different evaluation distributions.
+Under optimized exchange and matched test recordings, target-present exact match
+is 22.65\%, versus 1.52\% when the target is absent from training: a 21.13-point
+gap (95\% CI $[9.86,34.73]$; two-sided Wilcoxon $p=.00049$). The gap is positive
+for every architecture (26.76 TCN, 20.69 BiGRU, 20.14 Transformer, and 16.94 SSM
+points). Bit accuracy also falls 12.80 points (CI $[7.38,18.79]$; $p=.00049$).
+The original random-exchange analysis gives a compatible 25.44-point exact-match
+gap (CI $[17.31,33.32]$). RQ1 is therefore supported without comparing different
+evaluation distributions and is robust to substantially improved marginal balance.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/matched_exact.pdf}
 \caption{Exact diagnosis match on identical held-out recording groups. Training
-size, class weights, initialization, validation, and test rows are matched.}
+size, class weights, initialization, validation, and test rows are matched; exchanged
+rows are selected by the marginal-reducing optimization.}
 \label{fig:matched}
 \end{figure}
 
@@ -324,8 +335,9 @@ The study has one multi-label composition dataset and only 12 eligible diagnosis
 units. The split key identifies paired recordings, not verified participants, so
 we claim recording-pair rather than participant separation. The matched test uses
 three test groups per diagnosis and exchanges examples rather than preserving
-identical criterion marginals; shared class weights reduce but cannot remove that
-limitation. Manual criterion--anatomy mappings affect FACT,
+identical criterion marginals. Optimization roughly halves the mean worst-criterion
+count difference, but residual imbalance prevents a causal interpretation. Manual
+criterion--anatomy mappings affect FACT,
 which is why FACT is only a comparator. Thresholds are fixed at 0.5, and no claim
 is made about calibrated probabilities. Missing-frame rates reach 14.87\%
 in the squat lateral view; interpolation reduces but cannot eliminate uncertainty
@@ -334,13 +346,13 @@ intuitive but harsh; it is reported alongside bit accuracy and micro-F1.
 
 \section{Conclusion}
 On identical held-out recordings, removing a natural diagnosis from matched
-training reduces exact match by 25.44 points across four architecture families.
+training reduces exact match by 21.13 points across four architecture families,
+even after criterion-marginal differences are substantially reduced.
 ST-GCN and anatomical tokens do not eliminate the broader stress-test gap.
 Label-space analysis predicts vulnerable criteria, but simple marginal support
 explains more than local opposition. The result is a reproducible composition
 test with both a strong controlled effect and a bounded mechanism claim.
 
-\IEEEtriggeratref{2}
 \begin{thebibliography}{99}
 \bibitem{hassan2025alexgym} A. Hassan, A. Serour, A. Gamea, and W. Gomaa,
 ``ALEX-GYM-1: A novel dataset and hybrid 3D pose vision model for automated
