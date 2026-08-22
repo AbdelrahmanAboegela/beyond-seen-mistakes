@@ -18,10 +18,12 @@ try:
     from .alexgym_data import load_exercise
     from .modern_models import pose_features, ANAT_MAP
     from .loco_split import make_loco_split, DEFAULT_MIN_TRAIN_STATE, DEFAULT_MIN_VAL_STATE
+    from .lop_loss import LOSS_TYPES, compute_lop_weights, elementwise_loss
 except ImportError:
     from alexgym_data import load_exercise
     from modern_models import pose_features, ANAT_MAP
     from loco_split import make_loco_split, DEFAULT_MIN_TRAIN_STATE, DEFAULT_MIN_VAL_STATE
+    from lop_loss import LOSS_TYPES, compute_lop_weights, elementwise_loss
 
 torch.set_num_threads(2)
 
@@ -143,14 +145,17 @@ def predict(m,dl):
         for x,y in dl:ys.append(y.numpy());ps.append(torch.sigmoid(m(x)).numpy())
     return np.concatenate(ys),np.concatenate(ps)
 
-def variant_name(map_control='anatomy'):
+def variant_name(map_control='anatomy',loss_type='bce'):
     """Result-file name for a FACT configuration.
 
-    Only the reported configuration is called plain ``fact``; a map control
-    carries a suffix, so its runs can never be pooled with the reported panel
-    by ``aggregate_runs.py`` or accepted by ``verify_release.py``.
+    Only the reported configuration is called plain ``fact``; every ablation
+    carries a suffix, so an ablation run can never be pooled with the reported
+    panel by ``aggregate_runs.py`` or accepted by ``verify_release.py``.
     """
-    return 'fact' if map_control=='anatomy' else f'fact_{map_control}_map'
+    name='fact'
+    if map_control!='anatomy':name+=f'_{map_control}_map'
+    if loss_type!='bce':name+=f'_{loss_type}'
+    return name
 
 def context_counters(Y,tr):
     """Per-criterion Counter over leave-one-criterion-out training label contexts."""
@@ -169,10 +174,14 @@ def context_weights(y,counters,alpha):
     wb=torch.as_tensor(w,dtype=y.dtype,device=y.device)
     return wb/(wb.mean(0,keepdim=True)+1e-8)
 
-def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0,lam_supcon=0.0,lam_h1=0.0,features='j',soft_mask=True,eval_test=True,context_alpha=0.0,use_proto=True,global_mask=False,shared_adapter=False,map_control='anatomy',checkpoint=None,min_train_state=DEFAULT_MIN_TRAIN_STATE,min_val_state=DEFAULT_MIN_VAL_STATE):
+def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0,lam_supcon=0.0,lam_h1=0.0,features='j',soft_mask=True,eval_test=True,context_alpha=0.0,use_proto=True,global_mask=False,shared_adapter=False,map_control='anatomy',checkpoint=None,min_train_state=DEFAULT_MIN_TRAIN_STATE,min_val_state=DEFAULT_MIN_VAL_STATE,
+        loss_type='bce',lop_alpha=0.5,focal_gamma=2.0):
     seed_all(seed);X,Y,co,g,df=load_exercise(data,ex,T=16);tr,va,te,split_audit=make_loco_split(Y,co,g,target,seed,min_train_state=min_train_state,min_val_state=min_val_state)
     dl=DataLoader(DS(X,Y,tr),32,shuffle=True);dv=DataLoader(DS(X,Y,va),128);dt=DataLoader(DS(X,Y,te),128)
     m=FACT(ex,features=features,soft_mask=soft_mask,use_proto=use_proto,global_mask=global_mask,shared_adapter=shared_adapter,map_control=map_control);pos=Y[tr].sum(0);neg=len(tr)-pos;pw=torch.tensor(np.clip(neg/np.maximum(pos,1),.25,8),dtype=torch.float32)
+    # LOP weights are read from the training fold only, but they are indexed by
+    # the held-out target, so this ablation knows which diagnosis was withheld.
+    lop_weights=compute_lop_weights(Y[tr],target,alpha=lop_alpha) if loss_type=='lop_weighted' else None
     # Criterion-context importance weights: for criterion c, a context is y_-c.
     # The counters depend only on the training pool, so they are built once.
     counters=context_counters(Y,tr) if context_alpha>0 else None
@@ -182,7 +191,7 @@ def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0
         for x,y in dl:
             op.zero_grad();log,e=m(x,True)
             wbatch=context_weights(y,counters,context_alpha) if counters is not None else torch.ones_like(log)
-            raw=F.binary_cross_entropy_with_logits(log,y,reduction='none',pos_weight=pw)
+            raw=elementwise_loss(loss_type,log,y,pos_weight=pw,lop_weights=lop_weights,gamma=focal_gamma)
             loss=(raw*wbatch).mean()+lam_proto*proto_pull(e,y,m.proto)+lam_supcon*criterion_supcon(e,y)+lam_h1*h1_logit_consistency(log,y)
             loss.backward();torch.nn.utils.clip_grad_norm_(m.parameters(),5);op.step()
         yv,pv=predict(m,dv);sc=metrics(yv,pv)['macro_f1']
@@ -198,17 +207,21 @@ def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0
                     'seed':seed,'features':features,'soft_mask':soft_mask,
                     'use_proto':use_proto,'global_mask':global_mask,
                     'shared_adapter':shared_adapter,'map_control':map_control,'split_audit':split_audit},cp)
-    return {'method':'FACT','model':variant_name(map_control),'exercise':ex,'target':target,'seed':seed,'features':features,'soft_mask':soft_mask,'use_proto':use_proto,'global_mask':global_mask,'shared_adapter':shared_adapter,'map_control':map_control,'n_params':sum(p.numel() for p in m.parameters()),'n_train':len(tr),'n_val':len(va),'n_test':len(te),'split_audit':split_audit,'synthetic_data':bool(df.attrs.get('is_synthetic',False)),'val':metrics(yv,pv),'test':test,'epochs':ep+1,'train_seconds':time.time()-t0,'hyper':{'lr':lr,'lam_proto':lam_proto,'lam_supcon':lam_supcon,'lam_h1':lam_h1,'context_alpha':context_alpha}}
+    return {'method':'FACT','model':variant_name(map_control,loss_type),'exercise':ex,'target':target,'seed':seed,'features':features,'soft_mask':soft_mask,'use_proto':use_proto,'global_mask':global_mask,'shared_adapter':shared_adapter,'map_control':map_control,'n_params':sum(p.numel() for p in m.parameters()),'n_train':len(tr),'n_val':len(va),'n_test':len(te),'split_audit':split_audit,'synthetic_data':bool(df.attrs.get('is_synthetic',False)),'val':metrics(yv,pv),'test':test,'epochs':ep+1,'train_seconds':time.time()-t0,'hyper':{'lr':lr,'lam_proto':lam_proto,'lam_supcon':lam_supcon,'lam_h1':lam_h1,'context_alpha':context_alpha,'loss':loss_type,'lop_alpha':lop_alpha if loss_type=='lop_weighted' else None,'focal_gamma':focal_gamma if loss_type=='focal' else None},'uses_holdout_identity':loss_type=='lop_weighted'}
 
 if __name__=='__main__':
     ap=argparse.ArgumentParser();ap.add_argument('--data',default='data');ap.add_argument('--exercise',required=True);ap.add_argument('--target',required=True);ap.add_argument('--seed',type=int,default=42);ap.add_argument('--out',required=True);ap.add_argument('--epochs',type=int,default=80);ap.add_argument('--patience',type=int,default=12);ap.add_argument('--lr',type=float,default=1.5e-3);ap.add_argument('--lam-proto',type=float,default=0.0);ap.add_argument('--lam-supcon',type=float,default=0.0);ap.add_argument('--lam-h1',type=float,default=0.0);ap.add_argument('--features',default='j');ap.add_argument('--hard-mask',action='store_true');ap.add_argument('--context-alpha',type=float,default=0.0);ap.add_argument('--no-proto-decode',action='store_true');ap.add_argument('--global-mask',action='store_true');ap.add_argument('--shared-adapter',action='store_true');ap.add_argument('--map-control',choices=['anatomy','random','permuted'],default='anatomy');ap.add_argument('--no-test',action='store_true');ap.add_argument('--checkpoint')
     ap.add_argument('--min-train-state',type=int,default=DEFAULT_MIN_TRAIN_STATE,help='Minimum training examples per criterion state (frozen protocol: 8).')
     ap.add_argument('--min-val-state',type=int,default=DEFAULT_MIN_VAL_STATE,help='Minimum validation examples per criterion state (frozen protocol: 1).')
+    ap.add_argument('--loss',choices=list(LOSS_TYPES),default='bce',help="Training objective ablation. 'bce' is the reported setting. 'lop_weighted' additionally conditions on which diagnosis was held out, so it is an oracle-flavoured upper bound, not a deployable method.")
+    ap.add_argument('--lop-alpha',type=float,default=0.5,help='Strength of the LOP reweighting; only used with --loss lop_weighted.')
+    ap.add_argument('--focal-gamma',type=float,default=2.0,help='Focusing exponent; only used with --loss focal.')
     a=ap.parse_args()
     r=run(a.exercise,a.target,a.seed,data=a.data,epochs=a.epochs,patience=a.patience,lr=a.lr,
           lam_proto=a.lam_proto,lam_supcon=a.lam_supcon,lam_h1=a.lam_h1,features=a.features,
           soft_mask=not a.hard_mask,eval_test=not a.no_test,context_alpha=a.context_alpha,
           use_proto=not a.no_proto_decode,global_mask=a.global_mask,shared_adapter=a.shared_adapter,
           map_control=a.map_control,checkpoint=a.checkpoint,
-          min_train_state=a.min_train_state,min_val_state=a.min_val_state)
+          min_train_state=a.min_train_state,min_val_state=a.min_val_state,
+          loss_type=a.loss,lop_alpha=a.lop_alpha,focal_gamma=a.focal_gamma)
     Path(a.out).parent.mkdir(parents=True,exist_ok=True);Path(a.out).write_text(json.dumps(r,indent=2));print(json.dumps(r,indent=2))

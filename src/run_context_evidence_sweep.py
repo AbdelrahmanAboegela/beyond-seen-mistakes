@@ -10,9 +10,11 @@ BACKBONES={'tcn','gru','transformer','ssm','stgcn'}
 # FACT variant name -> map_control.  'fact' is the reported configuration; the
 # map controls are named so their result files cannot be pooled with it.
 FACT_VARIANTS={
-    'fact':              'anatomy',
-    'fact_random_map':   'random',
-    'fact_permuted_map': 'permuted',
+    'fact':                 ('anatomy',  'bce'),
+    'fact_random_map':      ('random',   'bce'),
+    'fact_permuted_map':    ('permuted', 'bce'),
+    'fact_lop_weighted':    ('anatomy',  'lop_weighted'),
+    'fact_focal':           ('anatomy',  'focal'),
 }
 SUPPORTED=sorted(set(FACT_VARIANTS)|BACKBONES)
 
@@ -31,7 +33,8 @@ def run_one(task,a):
          '--checkpoint',str(checkpoint),
          '--min-train-state',str(a.min_train_state),'--min-val-state',str(a.min_val_state)]
     if fact_variant:
-        cmd += ['--patience',str(a.patience),'--map-control',FACT_VARIANTS[model]]
+        map_control,loss=FACT_VARIANTS[model]
+        cmd += ['--patience',str(a.patience),'--map-control',map_control,'--loss',loss]
     else:
         cmd += ['--model',model,'--patience',str(a.patience)]
     env=os.environ.copy()
