@@ -8,7 +8,7 @@ from torch.utils.data import Dataset,DataLoader
 from sklearn.metrics import f1_score
 from alexgym_data import load_exercise,CRITERIA
 from modern_models import pose_features,ANAT_MAP
-from loco_split import make_loco_split
+from loco_split import make_loco_split, DEFAULT_MIN_TRAIN_STATE, DEFAULT_MIN_VAL_STATE
 
 torch.set_num_threads(2)
 
@@ -130,8 +130,8 @@ def predict(m,dl):
         for x,y in dl:ys.append(y.numpy());ps.append(torch.sigmoid(m(x)).numpy())
     return np.concatenate(ys),np.concatenate(ps)
 
-def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0,lam_supcon=0.0,lam_h1=0.0,features='j',soft_mask=True,eval_test=True,context_alpha=0.0,use_proto=True,global_mask=False,shared_adapter=False,map_control='anatomy',checkpoint=None):
-    seed_all(seed);X,Y,co,g,df=load_exercise(data,ex,T=16);tr,va,te,split_audit=make_loco_split(Y,co,g,target,seed)
+def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0,lam_supcon=0.0,lam_h1=0.0,features='j',soft_mask=True,eval_test=True,context_alpha=0.0,use_proto=True,global_mask=False,shared_adapter=False,map_control='anatomy',checkpoint=None,min_train_state=DEFAULT_MIN_TRAIN_STATE,min_val_state=DEFAULT_MIN_VAL_STATE):
+    seed_all(seed);X,Y,co,g,df=load_exercise(data,ex,T=16);tr,va,te,split_audit=make_loco_split(Y,co,g,target,seed,min_train_state=min_train_state,min_val_state=min_val_state)
     dl=DataLoader(DS(X,Y,tr),32,shuffle=True);dv=DataLoader(DS(X,Y,va),128);dt=DataLoader(DS(X,Y,te),128)
     m=FACT(ex,features=features,soft_mask=soft_mask,use_proto=use_proto,global_mask=global_mask,shared_adapter=shared_adapter,map_control=map_control);pos=Y[tr].sum(0);neg=len(tr)-pos;pw=torch.tensor(np.clip(neg/np.maximum(pos,1),.25,8),dtype=torch.float32)
     # Criterion-context importance weights: for criterion c, a context is y_-c.
@@ -141,9 +141,9 @@ def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0
         for c in range(Y.shape[1]):
             keys=[tuple(np.delete(Y[i].astype(np.int8),c).tolist()) for i in tr]
             cnt=Counter(keys)
-            vals=np.array([cnt[k]**(-context_alpha) for k in keys],np.float32); vals/=vals.mean()+1e-8
+            vals=np.array([max(cnt[k],1)**(-context_alpha) for k in keys],np.float32); vals/=vals.mean()+1e-8
             cw[tr,c]=vals
-    op=torch.optim.AdamW(m.parameters(),lr=lr,weight_decay=2e-4);best=-1;state=None;stale=0;t0=time.time()
+    op=torch.optim.AdamW(m.parameters(),lr=lr,weight_decay=2e-4);best=-1;state=None;stale=0;t0=time.time();ep=-1  # epochs=0 would leave ep unbound below
     for ep in range(epochs):
         m.train()
         for x,y in dl:
@@ -156,7 +156,7 @@ def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0
                 wb=[]
                 for c in range(Y.shape[1]):
                     ctx_full=Counter(tuple(np.delete(Y[i].astype(np.int8),c).tolist()) for i in tr)
-                    vv=[ctx_full[tuple(np.delete(row.detach().cpu().numpy().astype(np.int8),c).tolist())]**(-context_alpha) for row in y]
+                    vv=[max(ctx_full[tuple(np.delete(row.detach().cpu().numpy().astype(np.int8),c).tolist())],1)**(-context_alpha) for row in y]
                     wb.append(torch.tensor(vv,dtype=torch.float32,device=log.device))
                 wbatch=torch.stack(wb,1); wbatch=wbatch/(wbatch.mean(0,keepdim=True)+1e-8)
             else: wbatch=torch.ones_like(log)
@@ -167,7 +167,9 @@ def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0
         if sc>best+1e-4:best=sc;state={k:v.detach().clone() for k,v in m.state_dict().items()};stale=0
         else:stale+=1
         if stale>=patience:break
-    m.load_state_dict(state);yv,pv=predict(m,dv);test=None
+    # epochs=0 never records a best state, so there is nothing to restore
+    if state is not None:m.load_state_dict(state)
+    yv,pv=predict(m,dv);test=None
     if eval_test:yt,pt=predict(m,dt);test=metrics(yt,pt)
     if checkpoint:
         cp=Path(checkpoint);cp.parent.mkdir(parents=True,exist_ok=True)
@@ -178,5 +180,8 @@ def run(ex,target,seed,data='data',epochs=80,patience=12,lr=1.5e-3,lam_proto=0.0
     return {'method':'FACT','model':'fact' if map_control=='anatomy' else f'fact_{map_control}_map','exercise':ex,'target':target,'seed':seed,'features':features,'soft_mask':soft_mask,'use_proto':use_proto,'global_mask':global_mask,'shared_adapter':shared_adapter,'map_control':map_control,'n_params':sum(p.numel() for p in m.parameters()),'n_train':len(tr),'n_val':len(va),'n_test':len(te),'split_audit':split_audit,'val':metrics(yv,pv),'test':test,'epochs':ep+1,'train_seconds':time.time()-t0,'hyper':{'lr':lr,'lam_proto':lam_proto,'lam_supcon':lam_supcon,'lam_h1':lam_h1,'context_alpha':context_alpha}}
 
 if __name__=='__main__':
-    ap=argparse.ArgumentParser();ap.add_argument('--data',default='data');ap.add_argument('--exercise',required=True);ap.add_argument('--target',required=True);ap.add_argument('--seed',type=int,default=42);ap.add_argument('--out',required=True);ap.add_argument('--epochs',type=int,default=80);ap.add_argument('--patience',type=int,default=12);ap.add_argument('--lr',type=float,default=1.5e-3);ap.add_argument('--lam-proto',type=float,default=0.0);ap.add_argument('--lam-supcon',type=float,default=0.0);ap.add_argument('--lam-h1',type=float,default=0.0);ap.add_argument('--features',default='j');ap.add_argument('--hard-mask',action='store_true');ap.add_argument('--context-alpha',type=float,default=0.0);ap.add_argument('--no-proto-decode',action='store_true');ap.add_argument('--global-mask',action='store_true');ap.add_argument('--shared-adapter',action='store_true');ap.add_argument('--map-control',choices=['anatomy','random','permuted'],default='anatomy');ap.add_argument('--no-test',action='store_true');ap.add_argument('--checkpoint');a=ap.parse_args()
-    r=run(a.exercise,a.target,a.seed,a.data,a.epochs,a.patience,a.lr,a.lam_proto,a.lam_supcon,a.lam_h1,a.features,not a.hard_mask,not a.no_test,a.context_alpha,not a.no_proto_decode,a.global_mask,a.shared_adapter,a.map_control,a.checkpoint);Path(a.out).parent.mkdir(parents=True,exist_ok=True);Path(a.out).write_text(json.dumps(r,indent=2));print(json.dumps(r,indent=2))
+    ap=argparse.ArgumentParser();ap.add_argument('--data',default='data');ap.add_argument('--exercise',required=True);ap.add_argument('--target',required=True);ap.add_argument('--seed',type=int,default=42);ap.add_argument('--out',required=True);ap.add_argument('--epochs',type=int,default=80);ap.add_argument('--patience',type=int,default=12);ap.add_argument('--lr',type=float,default=1.5e-3);ap.add_argument('--lam-proto',type=float,default=0.0);ap.add_argument('--lam-supcon',type=float,default=0.0);ap.add_argument('--lam-h1',type=float,default=0.0);ap.add_argument('--features',default='j');ap.add_argument('--hard-mask',action='store_true');ap.add_argument('--context-alpha',type=float,default=0.0);ap.add_argument('--no-proto-decode',action='store_true');ap.add_argument('--global-mask',action='store_true');ap.add_argument('--shared-adapter',action='store_true');ap.add_argument('--map-control',choices=['anatomy','random','permuted'],default='anatomy');ap.add_argument('--no-test',action='store_true');ap.add_argument('--checkpoint')
+    ap.add_argument('--min-train-state',type=int,default=DEFAULT_MIN_TRAIN_STATE,help='Minimum training examples per criterion state (frozen protocol: 8).')
+    ap.add_argument('--min-val-state',type=int,default=DEFAULT_MIN_VAL_STATE,help='Minimum validation examples per criterion state (frozen protocol: 1).')
+    a=ap.parse_args()
+    r=run(a.exercise,a.target,a.seed,a.data,a.epochs,a.patience,a.lr,a.lam_proto,a.lam_supcon,a.lam_h1,a.features,not a.hard_mask,not a.no_test,a.context_alpha,not a.no_proto_decode,a.global_mask,a.shared_adapter,a.map_control,a.checkpoint,a.min_train_state,a.min_val_state);Path(a.out).parent.mkdir(parents=True,exist_ok=True);Path(a.out).write_text(json.dumps(r,indent=2));print(json.dumps(r,indent=2))

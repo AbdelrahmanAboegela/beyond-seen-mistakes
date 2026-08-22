@@ -12,12 +12,15 @@ def bootstrap_mean(x,n=100000,seed=20260820):
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--runs',default='results/runs/*.json')
-    ap.add_argument('--outdir',default='results/context');a=ap.parse_args();rows=[]
+    ap.add_argument('--outdir',default='results/context');a=ap.parse_args();rows=[];skipped=[]
     for p in glob.glob(a.runs):
         d=json.loads(Path(p).read_text());model=d.get('model','fact' if d.get('method')=='FACT' else 'unknown')
         for split in ('val','test'):
+            # a --no-test run stores test=None; record the omission rather than crashing
+            if not isinstance(d.get(split),dict):skipped.append((Path(p).name,split));continue
             for metric,val in d[split].items():
                 if isinstance(val,(int,float)):rows.append(dict(model=model,exercise=d['exercise'],target=str(d['target']),seed=d['seed'],split=split,metric=metric,value=val))
+    if skipped:print(f'note: {len(skipped)} run/split records had no metrics and were skipped, e.g. {skipped[:3]}')
     raw=pd.DataFrame(rows);out=Path(a.outdir);out.mkdir(parents=True,exist_ok=True);raw.to_csv(out/'metrics_long.csv',index=False)
     tm=raw.groupby(['model','exercise','target','split','metric'],as_index=False).value.mean()
     tm.to_csv(out/'target_mean_metrics.csv',index=False)

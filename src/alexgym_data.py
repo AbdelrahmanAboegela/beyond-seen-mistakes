@@ -50,10 +50,13 @@ def load_exercise(root,exercise='squat',T=16):
   if version==PREPROCESS_VERSION:
    df=pd.read_pickle(root/f'{exercise}_df.pkl'); return z['X'],z['Y'],z['co'],z['g'],df
  df=pd.read_excel(root/f'{exercise}.xlsx');front=json.load(open(root/f'front_pose_{exercise}.json'));lat=json.load(open(root/f'lat_pose_{exercise}.json'))
- assert len(df)==len(front)==len(lat)
+ # A bare assert is stripped by `python -O`; zip() would then truncate to the
+ # shortest input and pair each label row with the wrong pose sequence.
+ if not (len(df)==len(front)==len(lat)):
+  raise ValueError(f'{exercise}: workbook/front/lateral lengths differ: {len(df)}, {len(front)}, {len(lat)}. The three files must be row-aligned; see data/README.md.')
  X=[]
  quality=[];keep=[];excluded=[]
- for row_idx,(fs,ls) in enumerate(zip(front,lat)):
+ for row_idx,(fs,ls) in enumerate(zip(front,lat,strict=True)):
   fs,fv=fill_missing_frames(fs);ls,lv=fill_missing_frames(ls)
   if not fv.any() or not lv.any():
    excluded.append({'raw_row':int(row_idx),'front_has_valid_frame':bool(fv.any()),
