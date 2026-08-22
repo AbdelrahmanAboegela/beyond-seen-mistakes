@@ -30,6 +30,54 @@ def test_aggregation_survives_a_no_test_record(tmp_path, monkeypatch, capsys):
     assert (tmp_path / "out" / "metrics_long.csv").is_file()
 
 
+# A resampled mean summed in a different SIMD width, or a percentile taken by a
+# different numpy, lands a unit or two in the last place away from the value the
+# release was cut with -- roughly 1e-16 relative.  That is float arithmetic, not
+# a failure to reproduce.  This bound sits four orders of magnitude above that
+# noise and nine below the precision anything is reported at, so a real change
+# in the numbers cannot hide underneath it.
+_REL, _ABS = 1e-12, 1e-12
+
+
+def _mismatches(produced, published, path):
+    """Every value that differs, as ``(path, produced, published)`` triples.
+
+    Structure, keys, list lengths and non-numeric values must match exactly;
+    only floats get the tolerance.  Reporting all of them at once beats a
+    whole-dict ``==`` that dumps both trees and leaves you to spot the digit.
+    """
+    if isinstance(published, dict):
+        if not isinstance(produced, dict) or produced.keys() != published.keys():
+            return [(path, produced, published)]
+        return [m for k in published for m in _mismatches(produced[k], published[k], f"{path}.{k}")]
+    if isinstance(published, list):
+        if not isinstance(produced, list) or len(produced) != len(published):
+            return [(path, produced, published)]
+        return [m for i, (a, b) in enumerate(zip(produced, published))
+                for m in _mismatches(a, b, f"{path}[{i}]")]
+    if isinstance(published, float) and isinstance(produced, float):
+        close = abs(produced - published) <= max(_ABS, _REL * abs(published))
+        return [] if close else [(path, produced, published)]
+    return [] if produced == published and type(produced) is type(published) \
+        else [(path, produced, published)]
+
+
+def test_the_comparison_tolerates_last_place_noise_but_not_real_drift():
+    """Guards the guard: a tolerance nothing exercises drifts into always-true."""
+    ref = {"seen_mean": 0.6883179012345679, "bootstrap95": [0.07379629629629633, 0.1879],
+           "n_targets": 12, "model": "model_mean"}
+    ulp = {**ref, "bootstrap95": [0.0737962962962963, 0.1879]}  # the exact CI discrepancy
+    assert not _mismatches(ulp, ref, "s")
+
+    # a change in the fourth decimal -- the precision the paper reports at
+    assert _mismatches({**ref, "seen_mean": 0.6884}, ref, "s") == [
+        ("s.seen_mean", 0.6884, 0.6883179012345679)]
+    assert _mismatches({**ref, "n_targets": 11}, ref, "s")          # count changed
+    assert _mismatches({**ref, "model": "tcn"}, ref, "s")           # different model
+    assert _mismatches({k: v for k, v in ref.items() if k != "model"}, ref, "s")  # key dropped
+    assert _mismatches({**ref, "bootstrap95": [0.0737962962962963]}, ref, "s")   # bound dropped
+
+
 def test_published_statistics_reproduce_from_the_run_records(tmp_path):
     """rq_stats.json must be reconstructible from results/, not merely present."""
     lop, matched = tmp_path / "lop", tmp_path / "matched"
@@ -45,18 +93,10 @@ def test_published_statistics_reproduce_from_the_run_records(tmp_path):
 
     produced = json.loads(out.read_text())
     published = json.loads((ROOT / "results/rq_stats.json").read_text())
-    assert produced["primary"] == published["primary"], "the headline result did not reproduce"
-    assert produced["secondary"] == published["secondary"]
-
-    # The permutation null means carry float noise across library versions; the
-    # reported associations themselves must still match exactly.
-    for key, node in produced["diagnostic"].items():
-        ref = published["diagnostic"][key]
-        for field, value in node.items():
-            if field == "null_mean":
-                assert abs(value - ref[field]) < 1e-12, key
-            else:
-                assert value == ref[field], f"{key}.{field}"
+    for block in ("primary", "secondary", "diagnostic"):
+        bad = _mismatches(produced[block], published[block], block)
+        assert not bad, "rq_stats.json did not reproduce:\n" + "\n".join(
+            f"  {path}: produced {a!r}, published {b!r}" for path, a, b in bad)
 
 
 def test_release_verification_passes():
