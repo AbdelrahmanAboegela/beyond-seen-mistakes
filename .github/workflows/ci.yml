@@ -26,3 +26,7 @@ jobs:
       # unittest discover only collects TestCase subclasses: it ran 1 test, and
       # failed outright once the suite imported pytest, which CI had not installed.
       - run: python -m pytest -q
+      # The suite runs against src/ on sys.path, so it cannot see packaging
+      # faults. This builds a wheel, installs it outside the checkout and
+      # imports each module in a fresh interpreter.
+      - run: python scripts/check_wheel_imports.py

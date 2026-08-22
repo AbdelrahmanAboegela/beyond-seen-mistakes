@@ -253,10 +253,15 @@ if __name__ == "__main__":
                          "a research run must never fall back to synthetic data silently.")
     a = ap.parse_args()
     if a.audit_only:
-        _, Y, compositions, groups, _ = load_exercise(a.data, a.exercise, T=16, allow_synthetic=a.allow_synthetic)
+        _, Y, compositions, groups, df = load_exercise(a.data, a.exercise, T=16, allow_synthetic=a.allow_synthetic)
         _, _, _, _, audit = make_optimized_manifest_split(
             Y, compositions, groups, a.exercise, a.target, a.seed, a.manifest)
-        result = {"exercise": a.exercise, "target": a.target, "seed": a.seed, "split_audit": audit}
+        # analyze_matched_composition consumes audit-only records too (it reads
+        # split_audit), so this record needs the same provenance stamp as a
+        # trained one -- otherwise --audit-only --allow-synthetic slips through.
+        result = {"exercise": a.exercise, "target": a.target, "seed": a.seed,
+                  "synthetic_data": bool(df.attrs.get("is_synthetic", False)),
+                  "split_audit": audit}
     else:
         result = run(a.exercise, a.target, a.seed, a.model, a.data, a.epochs, a.manifest,
                      allow_synthetic=a.allow_synthetic)

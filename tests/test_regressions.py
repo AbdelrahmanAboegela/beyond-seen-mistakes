@@ -362,3 +362,25 @@ def test_package_version_matches_citation():
     pv = re.search(r'^version\s*=\s*"([^"]+)"', pyproject, re.M).group(1)
     cv = re.search(r"^version:\s*(\S+)", citation, re.M).group(1)
     assert pv == cv, f"pyproject {pv} != CITATION.cff {cv}"
+
+
+def test_installed_wheel_imports_every_module():
+    """Packaging faults are invisible to the rest of the suite, which runs with
+    `src` on sys.path. Opt in with BSM_WHEEL_TEST=1; CI always runs the script."""
+    import os
+    if os.environ.get("BSM_WHEEL_TEST") != "1":
+        pytest.skip("set BSM_WHEEL_TEST=1 to build and install a wheel (slow)")
+    proc = subprocess.run([sys.executable, str(ROOT / "scripts/check_wheel_imports.py")],
+                          capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_audit_only_records_carry_provenance():
+    """analyze_matched_composition also consumes --audit-only records, so an
+    unstamped one produced with --allow-synthetic would slip past its guard."""
+    import inspect
+    import matched_composition
+    src = inspect.getsource(matched_composition)
+    audit_branch = src.split("if a.audit_only:", 1)[1].split("else:", 1)[0]
+    assert '"synthetic_data"' in audit_branch, "--audit-only record is missing synthetic_data"
+    assert ", df = load_exercise" in audit_branch, "--audit-only discards the dataframe"
