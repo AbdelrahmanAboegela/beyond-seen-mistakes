@@ -3,6 +3,7 @@ name: artifact-integrity
 on:
   push:
   pull_request:
+  workflow_dispatch:   # lets a maintainer re-run CI without pushing
 
 jobs:
   verify:
@@ -13,11 +14,15 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -r requirements.txt pytest
+      # requirements.txt has no pytest; the suite imports it at module level, so
+      # installing only that file made test collection fail with ModuleNotFoundError.
+      - run: pip install -r requirements.txt
+      - run: pip install -e ".[dev]"
       - run: python scripts/verify_release.py
       - run: python src/analyze_lop_controls.py --outdir build/lop_controls
       - run: python src/analyze_matched_composition.py --runs 'results/matched_composition_v3_optimized/runs/*.json' --outdir build/matched
       - run: python src/compose_final_results.py --matched build/matched/stats.json --lop build/lop_controls/stats.json --out build/rq_stats.json
       - run: python scripts/generate_figures.py
-      # unittest discover only collects TestCase subclasses, which was 1 of 90 tests.
+      # unittest discover only collects TestCase subclasses: it ran 1 test, and
+      # failed outright once the suite imported pytest, which CI had not installed.
       - run: python -m pytest -q

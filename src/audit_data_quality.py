@@ -90,7 +90,7 @@ def main() -> None:
             lat = json.load(f)
         if not (len(df) == len(front) == len(lat)):
             raise ValueError(f"{ex}: workbook/front/lateral lengths differ: {len(df)}, {len(front)}, {len(lat)}")
-        for i, (fs, ls) in enumerate(zip(front, lat)):
+        for i, (fs, ls) in enumerate(zip(front, lat, strict=True)):
             rec = {"exercise": ex, "index": i}
             for view, seq in (("front", fs), ("lateral", ls)):
                 for key, value in sequence_quality(seq).items():
