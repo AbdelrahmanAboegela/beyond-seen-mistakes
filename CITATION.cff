@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this protocol or code, please cite the accompanying paper. Author metadata will be updated after double-blind review."
 title: "Beyond Seen Mistakes: A Matched Test of Natural Error-Composition Generalization in Exercise Assessment"
 type: software
-version: 0.1.0
+version: 0.3.0
 date-released: 2026-08-21
 authors:
   - family-names: "Anonymous"

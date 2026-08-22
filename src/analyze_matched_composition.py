@@ -21,6 +21,9 @@ def main():
     rows, audits = [], {}
     for path in glob.glob(args.runs):
         d = json.loads(Path(path).read_text())
+        if d.get("synthetic_data"):
+            raise ValueError(f"{path} was trained on synthetic placeholder data "
+                             "and must not enter a reported analysis.")
         key = (d["exercise"], str(d["target"]), int(d["seed"]))
         if "optimization" in d.get("split_audit", {}):
             audits[key] = d["split_audit"]

@@ -19,8 +19,12 @@ from scipy.optimize import Bounds, LinearConstraint, milp
 from torch import nn
 from torch.utils.data import DataLoader
 
-from alexgym_data import CRITERIA, load_exercise
-from train_backbones import DS, build, metrics, pred
+try:  # works both as a package (installed wheel) and as loose scripts on sys.path
+    from .alexgym_data import CRITERIA, load_exercise
+    from .train_backbones import DS, build, metrics, pred
+except ImportError:
+    from alexgym_data import CRITERIA, load_exercise
+    from train_backbones import DS, build, metrics, pred
 
 
 def state_counts(Y: np.ndarray, idx: np.ndarray) -> np.ndarray:
@@ -215,8 +219,9 @@ def train_condition(X, Y, train, val, test, kind, seed, shared_pos_weight, epoch
             "train_seconds": time.time() - started, "n_params": sum(p.numel() for p in model.parameters())}
 
 
-def run(exercise, target, seed, model, data, epochs=55, manifest=None):
-    X, Y, compositions, groups, _ = load_exercise(data, exercise, T=16)
+def run(exercise, target, seed, model, data, epochs=55, manifest=None, allow_synthetic=False):
+    X, Y, compositions, groups, df = load_exercise(data, exercise, T=16, allow_synthetic=allow_synthetic)
+    synthetic = bool(df.attrs.get("is_synthetic", False))
     if manifest:
         seen, unseen, val, test, audit = make_optimized_manifest_split(
             Y, compositions, groups, exercise, target, seed, manifest)
@@ -226,6 +231,7 @@ def run(exercise, target, seed, model, data, epochs=55, manifest=None):
         seen, unseen, val, test, audit = make_matched_split(Y, compositions, groups, target, seed)
     # Identical initialization seed isolates the training-set composition change.
     result = {"exercise": exercise, "target": target, "seed": seed, "model": model,
+              "synthetic_data": synthetic,
               "criteria": CRITERIA[exercise], "split_audit": audit}
     common_union = np.union1d(seen, unseen)
     pos = Y[common_union].sum(0); neg = len(common_union) - pos
@@ -242,13 +248,17 @@ if __name__ == "__main__":
     ap.add_argument("--seed", type=int, required=True); ap.add_argument("--model", default="tcn", choices=["tcn", "gru", "transformer", "ssm", "stgcn"])
     ap.add_argument("--epochs", type=int, default=55); ap.add_argument("--manifest")
     ap.add_argument("--audit-only", action="store_true"); ap.add_argument("--out", required=True)
+    ap.add_argument("--allow-synthetic", action="store_true",
+                    help="Permit generated placeholder poses with RANDOM labels. Off by default: "
+                         "a research run must never fall back to synthetic data silently.")
     a = ap.parse_args()
     if a.audit_only:
-        _, Y, compositions, groups, _ = load_exercise(a.data, a.exercise, T=16)
+        _, Y, compositions, groups, _ = load_exercise(a.data, a.exercise, T=16, allow_synthetic=a.allow_synthetic)
         _, _, _, _, audit = make_optimized_manifest_split(
             Y, compositions, groups, a.exercise, a.target, a.seed, a.manifest)
         result = {"exercise": a.exercise, "target": a.target, "seed": a.seed, "split_audit": audit}
     else:
-        result = run(a.exercise, a.target, a.seed, a.model, a.data, a.epochs, a.manifest)
+        result = run(a.exercise, a.target, a.seed, a.model, a.data, a.epochs, a.manifest,
+                     allow_synthetic=a.allow_synthetic)
     out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True); out.write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

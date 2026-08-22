@@ -13,10 +13,11 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt pytest
       - run: python scripts/verify_release.py
       - run: python src/analyze_lop_controls.py --outdir build/lop_controls
       - run: python src/analyze_matched_composition.py --runs 'results/matched_composition_v3_optimized/runs/*.json' --outdir build/matched
       - run: python src/compose_final_results.py --matched build/matched/stats.json --lop build/lop_controls/stats.json --out build/rq_stats.json
       - run: python scripts/generate_figures.py
-      - run: PYTHONPATH=src python -m unittest discover -s tests -v
+      # unittest discover only collects TestCase subclasses, which was 1 of 90 tests.
+      - run: python -m pytest -q

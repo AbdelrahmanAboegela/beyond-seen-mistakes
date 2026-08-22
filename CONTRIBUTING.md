@@ -16,4 +16,3 @@ anonymized; its own URL identifies them. Author-blinding applies only to the
 submission artifacts: `paper/Beyond_Seen_Mistakes.pdf` and the author fields of
 `CITATION.cff`. Do not add author names, affiliations, or acknowledgements to
 those two while the paper is under review.
-

@@ -131,10 +131,7 @@ def run(ex,target,seed,kind,data,epochs=100,checkpoint=None,patience=15,
                     'seed':seed,'input_dim':int(X.shape[-1]),'n_outputs':int(Y.shape[1]),
                     'split_audit':split_audit},cp)
     return {'exercise':ex,'target':target,'seed':seed,'model':kind,'criteria':CRITERIA[ex],'n_train':len(tr),'n_val':len(va),'n_test':len(te),'n_params':sum(p.numel() for p in m.parameters()),'split_audit':split_audit,'synthetic_data':bool(df.attrs.get('is_synthetic',False)),
-            # Backbones train on labels alone; no objective here consults the
-            # held-out composition. Emitted for schema parity with FACT records.
-            'uses_holdout_identity':False,
-            'val':metrics(yv,pv),'test':metrics(yt,pt),'epochs':e+1,'train_seconds':time.time()-t0}
+                        'val':metrics(yv,pv),'test':metrics(yt,pt),'epochs':e+1,'train_seconds':time.time()-t0}
 
 if __name__=='__main__':
     ap=argparse.ArgumentParser(); ap.add_argument('--data',default='data'); ap.add_argument('--exercise',default='squat'); ap.add_argument('--target',required=True); ap.add_argument('--seed',type=int,default=42); ap.add_argument('--model',choices=['tcn','gru','transformer','ssm','stgcn'],required=True); ap.add_argument('--out',required=True); ap.add_argument('--epochs',type=int,default=100); ap.add_argument('--patience',type=int,default=15); ap.add_argument('--checkpoint')

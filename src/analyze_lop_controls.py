@@ -14,7 +14,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
 
-from analyze_context_evidence import blocked_permutation
+try:
+    from .analyze_context_evidence import blocked_permutation
+except ImportError:
+    from analyze_context_evidence import blocked_permutation
 
 
 def build_rows(run_glob: str, context_csv: str) -> pd.DataFrame:

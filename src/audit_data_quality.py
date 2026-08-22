@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -69,8 +70,15 @@ def main() -> None:
             else:
                 manifest["files"][str(p.name)] = {"bytes": p.stat().st_size, "sha256": sha256(p)}
     if missing_files:
-        print(f"Audit skipped: Raw dataset files not found in '{root}'. Download ALEX-GYM-1 raw files per data/README.md to run audit.")
-        return
+        # Exit nonzero and leave a machine-readable marker: a silent success here
+        # lets a pipeline record "audit passed" when nothing was audited.
+        status = {"schema": 1, "status": "incomplete", "data_root": str(root.resolve()),
+                  "missing_files": sorted(str(p.name) for p in missing_files)}
+        (out / "raw_data_manifest.json").write_text(json.dumps(status, indent=2), encoding="utf-8")
+        print(json.dumps(status, indent=2))
+        print(f"Audit incomplete: raw ALEX-GYM files missing from '{root}'; see data/README.md.",
+              file=sys.stderr)
+        raise SystemExit(1)
 
     for ex in EXERCISES:
         xlsx = root / f"{ex}.xlsx"

@@ -7,19 +7,19 @@ SRC_DIR=Path(__file__).resolve().parent
 ROOT_DIR=SRC_DIR.parent
 
 BACKBONES={'tcn','gru','transformer','ssm','stgcn'}
-# FACT variant name -> (map_control, loss).  'fact' is the reported
-# configuration; everything else is an ablation and is named so that its result
-# files cannot be pooled with the reported panel.
+# FACT variant name -> map_control.  'fact' is the reported configuration; the
+# map controls are named so their result files cannot be pooled with it.
 FACT_VARIANTS={
-    'fact':                 ('anatomy',  'bce'),
-    'fact_random_map':      ('random',   'bce'),
-    'fact_permuted_map':    ('permuted', 'bce'),
-    'fact_lop_weighted':    ('anatomy',  'lop_weighted'),
-    'fact_focal':           ('anatomy',  'focal'),
+    'fact':              'anatomy',
+    'fact_random_map':   'random',
+    'fact_permuted_map': 'permuted',
 }
 SUPPORTED=sorted(set(FACT_VARIANTS)|BACKBONES)
 
 def run_one(task,a):
+    # a.data/a.outdir were resolved against the caller's cwd in main() before the
+    # child is launched with cwd=ROOT_DIR; relative paths must not silently
+    # re-anchor to the repository root.
     model,ex,target,seed=task;root=Path(a.outdir);stem=f'{model}_{ex}_{target}_s{seed}'
     result=root/'runs'/f'{stem}.json';checkpoint=root/'checkpoints'/f'{stem}.pt'
     fact_variant=model in FACT_VARIANTS
@@ -31,8 +31,7 @@ def run_one(task,a):
          '--checkpoint',str(checkpoint),
          '--min-train-state',str(a.min_train_state),'--min-val-state',str(a.min_val_state)]
     if fact_variant:
-        map_control,loss=FACT_VARIANTS[model]
-        cmd += ['--patience',str(a.patience),'--map-control',map_control,'--loss',loss]
+        cmd += ['--patience',str(a.patience),'--map-control',FACT_VARIANTS[model]]
     else:
         cmd += ['--model',model,'--patience',str(a.patience)]
     env=os.environ.copy()
@@ -54,7 +53,11 @@ def main():
     ap.add_argument('--jobs',type=int,default=3);ap.add_argument('--epochs',type=int,default=55);ap.add_argument('--patience',type=int,default=9)
     ap.add_argument('--min-train-state',type=int,default=8);ap.add_argument('--min-val-state',type=int,default=1)
     ap.add_argument('--timeout',type=int,default=3600,help='Per-run wall-clock limit in seconds.')
-    a=ap.parse_args();root=Path(a.outdir)
+    a=ap.parse_args()
+    a.data=str(Path(a.data).resolve())
+    a.outdir=str(Path(a.outdir).resolve())
+    a.protocol=str(Path(a.protocol).resolve())
+    root=Path(a.outdir)
     models=[m.strip() for m in a.models.split(',') if m.strip()]
     if unknown:=[m for m in models if m not in SUPPORTED]:
         ap.error(f'unsupported --models entries {unknown}; choose from {SUPPORTED}')

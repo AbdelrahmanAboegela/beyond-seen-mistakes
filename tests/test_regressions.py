@@ -29,14 +29,6 @@ from loco_split import (
     frozen_selection_score,
     make_loco_split,
 )
-from lop_loss import (
-    LOPWeightedBCELoss,
-    LOSS_TYPES,
-    compute_lop_counts,
-    compute_lop_weights,
-    elementwise_loss,
-    get_loss_fn,
-)
 from synthetic_data import create_synthetic_data_dir
 from train_backbones import TransformerModel
 from train_fact import context_counters, context_weights, run as run_fact
@@ -205,73 +197,14 @@ def test_aggregate_refuses_synthetic_runs(tmp_path, monkeypatch):
         aggregate_runs.main()
 
 
-# --- LOP loss ---------------------------------------------------------------
-
-def test_lop_counts_reject_a_mismatched_target():
-    Y = np.array([[1, 1, 1], [0, 1, 1]])
-    with pytest.raises(ValueError, match="4 bits but Y_train has 3 criteria"):
-        compute_lop_counts(Y, target_str="1111")
-    with pytest.raises(ValueError, match="binary string"):
-        compute_lop_counts(Y, target_str="1x1")
-
-
-def test_lop_loss_weights_move_with_the_module():
-    loss_fn = LOPWeightedBCELoss(pos_weight=torch.ones(3), lop_weights=torch.ones(3))
-    assert "lop_weights" in dict(loss_fn.named_buffers())
-    assert "pos_weight" in dict(loss_fn.named_buffers())
-
-
-def test_bce_ablation_is_bit_identical_to_the_frozen_expression():
-    """The reported panel trains with --loss bce. Routing it through the loss
-    selector must not perturb a single bit, or the frozen results move."""
-    import torch.nn.functional as F
-    torch.manual_seed(0)
-    logits, targets = torch.randn(8, 6), (torch.rand(8, 6) > .5).float()
-    pos_weight = torch.rand(6) + .5
-    reference = F.binary_cross_entropy_with_logits(
-        logits, targets, reduction="none", pos_weight=pos_weight)
-    assert torch.equal(elementwise_loss("bce", logits, targets, pos_weight=pos_weight), reference)
-
-
-@pytest.mark.parametrize("loss_type", list(LOSS_TYPES))
-def test_every_loss_ablation_is_unreduced_and_differentiable(loss_type):
-    logits = torch.randn(4, 3, requires_grad=True)
-    targets = (torch.rand(4, 3) > .5).float()
-    weights = compute_lop_weights(np.array([[1, 1, 1], [0, 1, 1], [1, 0, 1]]), "111")
-    out = elementwise_loss(loss_type, logits, targets, lop_weights=weights)
-    assert out.shape == logits.shape, "training multiplies by context weights before reducing"
-    out.mean().backward()
-    assert logits.grad is not None and torch.isfinite(logits.grad).all()
-
-
-def test_lop_ablation_actually_reweights_criteria():
-    logits, targets = torch.zeros(4, 3), torch.ones(4, 3)
-    flat = elementwise_loss("bce", logits, targets)
-    weighted = elementwise_loss("lop_weighted", logits, targets,
-                                lop_weights=torch.tensor([1.0, 2.0, 1.0]))
-    assert not torch.allclose(flat, weighted)
-    # mean-1 normalization keeps the overall scale comparable at the same lr
-    assert weighted.mean().item() == pytest.approx(flat.mean().item(), rel=1e-6)
-
-
-def test_ablations_get_distinct_model_names():
-    """An ablation run must never be poolable with the reported panel."""
-    from train_fact import variant_name
-    assert variant_name("anatomy", "bce") == "fact"
-    assert variant_name("anatomy", "focal") == "fact_focal"
-    assert variant_name("anatomy", "lop_weighted") == "fact_lop_weighted"
-    assert variant_name("random", "bce") == "fact_random_map"
-    names = {variant_name(m, l) for m in ("anatomy", "random", "permuted") for l in LOSS_TYPES}
-    assert len(names) == 9 and sum(n == "fact" for n in names) == 1
-
 
 def test_verify_release_rejects_ablation_run_files(tmp_path):
-    """verify_release's filename grammar must not admit fact_focal_* records."""
+    """verify_release's filename grammar must admit only the reported panel."""
     import re
     pattern = re.compile(r"^(tcn|gru|transformer|ssm|fact)_(squat|deadlift)_([01]+)_s(7|42|123)$")
     assert pattern.match("fact_squat_000000_s7")
-    assert not pattern.match("fact_focal_squat_000000_s7")
-    assert not pattern.match("fact_lop_weighted_squat_000000_s7")
+    assert not pattern.match("fact_random_map_squat_000000_s7")
+    assert not pattern.match("fact_permuted_map_squat_000000_s7")
 
 
 def test_synthetic_cache_creation_is_concurrency_safe(tmp_path):
@@ -298,23 +231,12 @@ def test_synthetic_cache_writes_land_on_the_expected_names(tmp_path):
 
 
 def test_every_run_record_declares_its_provenance():
-    """aggregate_runs and any downstream audit rely on these two flags existing
-    on records from both trainers."""
+    """aggregate_runs and any downstream audit rely on this flag existing."""
     for record in (ROOT / "results/runs").glob("*.json"):
         payload = json.loads(record.read_text())
         assert not payload.get("synthetic_data", False), record.name
-        assert not payload.get("uses_holdout_identity", False), record.name
 
 
-def test_lop_factory_requires_weights():
-    with pytest.raises(ValueError, match="requires lop_weights"):
-        get_loss_fn(loss_type="lop_weighted")
-
-
-def test_lop_loss_rejects_a_criterion_count_mismatch():
-    loss_fn = LOPWeightedBCELoss(lop_weights=torch.ones(3))
-    with pytest.raises(ValueError, match="entries but"):
-        loss_fn(torch.randn(2, 5), torch.zeros(2, 5))
 
 
 # --- command line surfaces --------------------------------------------------
@@ -367,3 +289,76 @@ def test_alignment_guard_is_not_an_assert():
     import alexgym_data
     body = inspect.getsource(alexgym_data.load_exercise)
     assert "assert " not in body, "data-integrity checks must not use bare assert"
+
+
+# --- review follow-ups (PR #1) ----------------------------------------------
+
+def test_matched_pipeline_defaults_to_refusing_synthetic_data():
+    """The v3 pipeline is a research command: a missing dataset must fail, not
+    silently train on random labels."""
+    import inspect
+    import matched_composition
+    sig = inspect.signature(matched_composition.run)
+    assert sig.parameters["allow_synthetic"].default is False
+
+
+def test_matched_records_are_stamped_with_provenance(tmp_path):
+    import inspect
+    import matched_composition
+    src = inspect.getsource(matched_composition.run)
+    assert '"synthetic_data": synthetic' in src, "matched records must carry synthetic_data"
+    assert "allow_synthetic=allow_synthetic" in src
+
+
+def test_matched_analysis_refuses_synthetic_records(tmp_path):
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    (runs / "r.json").write_text(json.dumps({
+        "exercise": "squat", "target": "000000", "seed": 7, "model": "tcn",
+        "synthetic_data": True,
+        "seen": {"test": {"exact_match": 0.1}}, "unseen": {"test": {"exact_match": 0.1}}}))
+    proc = subprocess.run(
+        [sys.executable, str(SRC / "analyze_matched_composition.py"),
+         "--runs", str(runs / "*.json"), "--outdir", str(tmp_path / "out")],
+        capture_output=True, text=True)
+    assert proc.returncode != 0 and "synthetic" in proc.stderr
+
+
+def test_audit_fails_loudly_when_raw_data_is_missing(tmp_path):
+    """Exiting 0 with a friendly message let a pipeline record 'audit passed'
+    when nothing had been audited."""
+    proc = subprocess.run(
+        [sys.executable, str(SRC / "audit_data_quality.py"),
+         "--data", str(tmp_path / "absent"), "--outdir", str(tmp_path / "out")],
+        capture_output=True, text=True)
+    assert proc.returncode == 1
+    marker = json.loads((tmp_path / "out" / "raw_data_manifest.json").read_text())
+    assert marker["status"] == "incomplete" and marker["missing_files"]
+
+
+def test_wilcoxon_helper_only_swallows_degenerate_cases():
+    """A blanket `except Exception: return 1.0` reports unrelated faults as a
+    null result. Only scipy's ValueError for degenerate input may be absorbed."""
+    import inspect
+    import aggregate_runs
+    src = inspect.getsource(aggregate_runs.safe_wilcoxon)
+    assert "except ValueError" in src and "except Exception" not in src
+
+
+def test_sweep_resolves_paths_before_switching_cwd():
+    """Children run with cwd=ROOT_DIR, so a relative --data/--outdir given from
+    another directory must not re-anchor to the repository root."""
+    import inspect
+    import run_context_evidence_sweep as sweep
+    src = inspect.getsource(sweep.main)
+    for flag in ("a.data", "a.outdir", "a.protocol"):
+        assert f"{flag}=str(Path({flag}).resolve())" in src, f"{flag} is not resolved before cwd change"
+
+
+def test_package_version_matches_citation():
+    import re
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    pv = re.search(r'^version\s*=\s*"([^"]+)"', pyproject, re.M).group(1)
+    cv = re.search(r"^version:\s*(\S+)", citation, re.M).group(1)
+    assert pv == cv, f"pyproject {pv} != CITATION.cff {cv}"

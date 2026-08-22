@@ -41,7 +41,7 @@ def test_normalize_pose_pelvis_centering():
     seq = np.random.randn(16, 33, 3).astype(np.float32)
     seq[:, 23, :] = np.array([2.0, 4.0, 6.0])
     seq[:, 24, :] = np.array([4.0, 6.0, 8.0])
-    
+
     norm = normalize_pose(seq)
     pelvis_mid = (norm[:, 23, :] + norm[:, 24, :]) / 2.0
     np.testing.assert_allclose(pelvis_mid, 0.0, atol=1e-5)

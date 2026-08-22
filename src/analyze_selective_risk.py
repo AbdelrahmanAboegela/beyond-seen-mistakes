@@ -82,7 +82,10 @@ def safe_wilcoxon(d, zero_method='zsplit', alternative='two-sided'):
         return 1.0
     try:
         return float(wilcoxon(d, zero_method=zero_method, alternative=alternative).pvalue)
-    except Exception:
+    except ValueError:
+        # scipy raises ValueError for the genuinely degenerate cases (too few
+        # samples, all-zero differences). Anything else is a real fault and
+        # must surface rather than be reported as a null result.
         return 1.0
 
 def main():

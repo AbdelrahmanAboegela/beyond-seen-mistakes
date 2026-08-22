@@ -29,7 +29,7 @@ def generate_synthetic_pose(T_raw=24, num_joints=33, missing_frames=0, seed=None
     base_joints = rng.normal(size=(1, num_joints, 3)) * 0.1
     # Simple harmonic motion for joints over time
     pose = base_joints + np.sin(t) * 0.2
-    
+
     # Set realistic pelvis and shoulder joints to ensure valid normalization
     # Joints 11, 12 (shoulders), 23, 24 (pelvis/hips)
     pose[:, 11, :] = np.array([-0.2, 0.5, 0.0])
@@ -48,7 +48,7 @@ def generate_synthetic_exercise_dataset(exercise="squat", n_samples=30, T=16, se
     """Generate synthetic array features and metadata matching load_exercise return signature."""
     rng = np.random.default_rng(seed)
     n_criteria = len(CRITERIA[exercise])
-    
+
     # Generate 198-D preprocessed features (2 views * 16 frames * 33 joints * 3 coords)
     X = rng.normal(size=(n_samples, T, 198)).astype(np.float32)
     # Generate binary label matrix
