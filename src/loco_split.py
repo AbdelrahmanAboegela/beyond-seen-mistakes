@@ -10,8 +10,17 @@ import numpy as np
 from sklearn.model_selection import GroupShuffleSplit
 
 
+# Frozen support rule, mirroring configs/final_protocol.json ->
+# default_support_rule.  Training, manifest construction and analysis must all
+# use the same thresholds, or a run can be scored on a split the published
+# manifest never sanctioned.
+DEFAULT_MIN_TRAIN_STATE = 8
+DEFAULT_MIN_VAL_STATE = 1
+
+
 def make_loco_split(Y, compositions, groups, target, seed, *, val_fraction=.2,
-                    min_train_state=1, min_val_state=1, candidates=512):
+                    min_train_state=DEFAULT_MIN_TRAIN_STATE,
+                    min_val_state=DEFAULT_MIN_VAL_STATE, candidates=512):
     """Return recording-disjoint train/validation/test indices and an audit.
 
     All recordings carrying ``target`` are test-only.  Among deterministic
@@ -52,6 +61,7 @@ def make_loco_split(Y, compositions, groups, target, seed, *, val_fraction=.2,
                          f"validation>={min_val_state} examples for every criterion state.")
     _, train, val, train_counts, val_counts, offset = best
     audit = dict(target=target, seed=int(seed), split_offset=int(offset),
+                 min_train_state=int(min_train_state), min_val_state=int(min_val_state),
                  target_groups=target_groups.tolist(), n_train=int(len(train)),
                  n_val=int(len(val)), n_test=int(len(test)),
                  train_state_counts=train_counts.tolist(), val_state_counts=val_counts.tolist(),
