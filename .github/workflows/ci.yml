@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install -r requirements.txt pytest
+      - run: pip install -r requirements.txt
       - run: python scripts/verify_release.py
       - run: python src/analyze_lop_controls.py --outdir build/lop_controls
       - run: python src/analyze_matched_composition.py --runs 'results/matched_composition_v3_optimized/runs/*.json' --outdir build/matched
