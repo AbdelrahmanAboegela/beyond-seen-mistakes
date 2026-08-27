@@ -33,10 +33,15 @@ exact diagnosis match from 22.65\% to 1.52\% (target bootstrap gap 21.13 points,
 A six-model stress test, including ST-GCN and an anatomical-token model, shows
 that topology and locality do not eliminate the failure. A label-space audit
 finds that one-bit opposing neighbors predict vulnerable criteria across models,
-but global opposing-state support is stronger and the local count adds no
-reliable partial association ($p=.200$). The contribution is therefore a
-controlled composition test and an evidence-bounded diagnosis of its failure,
-not a new architecture or causal shortcut claim.
+but a far simpler statistic---the raw count of training examples opposing a
+criterion's target state---is a stronger predictor ($\rho=-.742$) and absorbs
+the local count's association entirely ($p=.200$ once controlled), separating
+an 82.70\% bottom-quartile criterion from a 40.79\% top-quartile one. The
+contribution
+is therefore a controlled composition test, an evidence-bounded diagnosis of
+its failure, and a zero-cost pre-training audit statistic that flags which
+criteria of a planned diagnosis are likely to fail---not a new architecture or
+causal shortcut claim.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -76,11 +81,14 @@ same held-out recording groups under matched training size and loss weights.
 criteria beyond ordinary marginal criterion support. Tests are two-sided; exact
 match was fixed as the sole primary endpoint before the corrected matched rerun.
 
-We contribute a data-audited observed-composition protocol, a controlled
-target-present/absent comparison, and a six-architecture stress test. We also
-show why a plausible local label diagnostic must be interpreted against simpler
-support controls. Figure \ref{fig:protocol} shows the naturally observed diagnosis
-spaces and targets retained by the support rule.
+We contribute (i) a data-audited observed-composition protocol, (ii) a
+controlled target-present/absent comparison, (iii) a six-architecture stress
+test, and (iv) evidence that a plausible local label diagnostic is subsumed by
+a much simpler statistic---the marginal count of training examples opposing a
+criterion's target state---which doubles as a practical, zero-cost audit
+computed from training labels alone before any model is touched. Figure
+\ref{fig:protocol} shows the naturally observed diagnosis spaces and targets
+retained by the support rule.
 
 \begin{figure*}[t]
 \centering
@@ -236,10 +244,11 @@ Opposition Pressure is
 where $\mathcal T$ is the fold training set. Large pressure means many training
 examples reproduce the target context while supporting the wrong current bit.
 We compare it with global opposing-state support,
-$G_c=\sum_{i\in\mathcal T}\mathbb 1[y_{i,c}\ne y_c^*]$. Target frequency,
-cardinality, and total one-bit neighborhood density are constants across criteria
-inside a diagnosis and cancel under within-diagnosis ranking. LOP is an exposure
-association, not causal influence or deployment confidence.
+$G_c=\sum_{i\in\mathcal T}\mathbb 1[y_{i,c}\ne y_c^*]$, a single training-label
+count requiring no context matching. Target frequency, cardinality, and total
+one-bit neighborhood density are constants across criteria inside a diagnosis
+and cancel under within-diagnosis ranking. Both LOP and $G_c$ are exposure
+associations, not causal influence or a guarantee of failure.
 
 \section{Statistical Analysis}
 The held-out diagnosis is the statistical unit. For RQ1, we average seeds and the
@@ -309,7 +318,7 @@ FACT & \textbf{72.39} & \textbf{63.95} & \textbf{18.56} & \textbf{64.89} & 44.77
 \end{tabular}
 \end{table}
 
-\subsection{RQ2: local opposition does not beat marginal support}
+\subsection{RQ2: marginal support, not local opposition, is the practical predictor}
 Raw LOP is negatively associated with held-out criterion accuracy across all five
 temporal models (per-model $\rho$ from $-.367$ to $-.648$, all blocked
 $p\leq.00584$); the model-mean $\rho$ is $-.632$ ($p<.00004$). However, global
@@ -317,6 +326,12 @@ opposing-state support is stronger ($\rho=-.742$, $p<.00004$). After controlling
 for that support and the target bit, LOP's partial rank association is $-.182$
 ($p=.200$). RQ2 is therefore not supported in its incremental form: the local
 count is descriptive, but these data favor the simpler marginal-support account.
+
+The association is practically large: among the 67 target--criterion units,
+the bottom $G_c$ quartile (least opposed) averages 82.70\% held-out accuracy
+versus 40.79\% for the top quartile (most opposed). Because $G_c$ needs only
+training labels, this doubles as a pre-training audit for a proposed
+diagnosis composition, computed without running an experiment.
 
 \section{Discussion}
 The matched comparison changes the evidential strength of the study: target
@@ -328,7 +343,12 @@ topology is not by itself a remedy.
 The control analysis also changes the mechanism claim. LOP reliably describes
 which bit fails, but it is partly a proxy for ordinary criterion-state imbalance.
 Reporting the stronger $G_c$ control and null partial result prevents a local
-label-neighborhood association from being mistaken for unique or causal evidence.
+label-neighborhood association from being mistaken for unique or causal
+evidence. This reframes the diagnostic contribution rather than weakening it:
+the practical takeaway is not a mechanism story about label neighborhoods but
+that ordinary criterion-state imbalance, on its own, predicts held-out failure
+well enough to serve as a deployment-time checklist item requiring no training
+run.
 
 \section{Limitations}
 The study has one multi-label composition dataset and only 12 eligible diagnosis
@@ -341,17 +361,22 @@ criterion--anatomy mappings affect FACT,
 which is why FACT is only a comparator. Thresholds are fixed at 0.5, and no claim
 is made about calibrated probabilities. Missing-frame rates reach 14.87\%
 in the squat lateral view; interpolation reduces but cannot eliminate uncertainty
-from pose-detector failures. Finally, exact match is clinically
-intuitive but harsh; it is reported alongside bit accuracy and micro-F1.
+from pose-detector failures. The $G_c$ quartile split (17 units per quartile) reuses the RQ2 sample, so it
+is descriptive, not an independent validation of the audit statistic. Finally,
+exact match is clinically intuitive but harsh; it is reported alongside bit
+accuracy and micro-F1.
 
 \section{Conclusion}
 On identical held-out recordings, removing a natural diagnosis from matched
 training reduces exact match by 21.13 points across four architecture families,
 even after criterion-marginal differences are substantially reduced.
 ST-GCN and anatomical tokens do not eliminate the broader stress-test gap.
-Label-space analysis predicts vulnerable criteria, but simple marginal support
-explains more than local opposition. The result is a reproducible composition
-test with both a strong controlled effect and a bounded mechanism claim.
+Label-space analysis predicts vulnerable criteria, and the simplest available
+statistic---marginal opposing-state support, not local one-bit
+opposition---does the predicting. The result is a reproducible composition
+test, an evidence-bounded diagnosis of its failure, and a practical,
+training-free audit statistic a practitioner can compute before touching a
+model.
 
 \begin{thebibliography}{99}
 \bibitem{hassan2025alexgym} A. Hassan, A. Serour, A. Gamea, and W. Gomaa,

@@ -19,9 +19,9 @@ Each node is a naturally observed multi-error diagnosis, node area is frequency,
 |---|---:|---|
 | **RQ1.** Does removing a diagnosis from matched training reduce performance on the same test recordings? | Optimized exchange exact match: **22.65% → 1.52%**, gap 21.13 pp, 95% CI [9.86, 34.73], *p*=.00049 | Yes, across TCN, GRU, Transformer and SSM. |
 | Secondary criterion outcome | Bit accuracy drops **12.80 pp**, CI [7.38, 18.79], *p*=.00049 | The failure is not only an exact-match artifact. |
-| **RQ2.** Does local label opposition add information beyond marginal support? | Raw LOP ρ=-.632; global support ρ=-.742; partial LOP *p*=.200 | No reliable incremental effect; marginal criterion support is the stronger diagnostic. |
+| **RQ2.** Does local label opposition add information beyond marginal support? | Raw LOP ρ=-.632; global support ρ=-.742; partial LOP *p*=.200 | LOP adds nothing once marginal support is controlled for — but marginal support itself (`global_opposing_support`, $G_c$) is a strong, training-label-only predictor: bottom-quartile criteria average 82.70% held-out accuracy vs. 40.79% for top-quartile criteria. |
 
-The contribution is the **matched observed-composition protocol and controlled effect**, not a claim that FACT is universally superior. The negative LOP control and earlier null supplemental result are deliberately public.
+The contribution is the **matched observed-composition protocol and controlled effect**, plus $G_c$ as a zero-cost pre-training audit statistic — not a claim that FACT is universally superior. The negative LOP control is deliberately public: it redirects the diagnostic from a fancier mechanism story to the simpler, actionable one.
 
 ![Matched target-present versus target-absent exact diagnosis match](paper/figures/matched_exact.png)
 
@@ -60,6 +60,7 @@ Metrics have distinct meanings:
 - **Micro-F1:** positive-error detection pooled across criteria.
 - **Exact match:** fraction of repetitions for which every criterion is correct; this is the diagnosis-level primary outcome.
 - **LOP:** a training-label-only count of one-bit opposing neighbors for a focal criterion. It diagnoses exposure pressure; it is not a causal model explanation.
+- **$G_c$ (global opposing support):** the count of training examples whose focal criterion state opposes the target's, with no context matching at all. It beats LOP as a predictor (ρ=-.742 vs. -.632) and needs no model — compute it for a proposed diagnosis before training to flag criteria likely to fail.
 
 ## Repository map
 
