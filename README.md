@@ -60,7 +60,7 @@ Metrics have distinct meanings:
 - **Micro-F1:** positive-error detection pooled across criteria.
 - **Exact match:** fraction of repetitions for which every criterion is correct; this is the diagnosis-level primary outcome.
 - **LOP:** a training-label-only count of one-bit opposing neighbors for a focal criterion. It diagnoses exposure pressure; it is not a causal model explanation.
-- **$G_c$ (global opposing support):** the count of training examples whose focal criterion state opposes the target's, with no context matching at all. It beats LOP as a predictor (ρ=-.742 vs. -.632) and needs no model — compute it for a proposed diagnosis before training to flag criteria likely to fail.
+- **$G_c$ (global opposing support):** the count of training examples whose focal criterion state opposes the target's — ordinary per-criterion class imbalance, not a new statistic. It beats LOP as a predictor (ρ=-.742 vs. -.632) and needs no model — compute it for a proposed diagnosis before training to flag criteria likely to fail.
 
 ## Repository map
 
