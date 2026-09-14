@@ -39,9 +39,9 @@ the local count's association entirely ($p=.200$ once controlled), separating
 an 82.70\% bottom-quartile criterion from a 40.79\% top-quartile one. The
 contribution
 is therefore a controlled composition test, an evidence-bounded diagnosis of
-its failure, and a zero-cost pre-training audit statistic that flags which
-criteria of a planned diagnosis are likely to fail---not a new architecture or
-causal shortcut claim.
+its failure, and confirmation---not introduction---of a known imbalance
+signal that flags which criteria of a planned diagnosis are likely to fail
+before training.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -71,8 +71,8 @@ isolated error classes and tests synthetically enumerated composites
 multi-label learning \cite{chai2024compositional}. Our setting is narrower and
 naturalistic: training remains multi-error, every evaluated criterion state has
 training support, and test diagnoses are naturally observed in a public
-two-view exercise dataset. We do not claim the first composite-error task or the
-first combination split.
+two-view exercise dataset, so we do not claim the first composite-error task
+or combination split.
 
 We organize the study around two retrospective questions. \textbf{RQ1} asks
 whether removing a target diagnosis from training reduces performance on the
@@ -84,9 +84,9 @@ match was fixed as the sole primary endpoint before the corrected matched rerun.
 We contribute (i) a data-audited observed-composition protocol, (ii) a
 controlled target-present/absent comparison, (iii) a six-architecture stress
 test, and (iv) evidence that a plausible local label diagnostic is subsumed by
-a much simpler statistic---the marginal count of training examples opposing a
-criterion's target state---which doubles as a practical, zero-cost audit
-computed from training labels alone before any model is touched. Figure
+ordinary per-criterion class imbalance, confirming a known
+imbalance-generalization relationship under composition shift and usable as a
+training-free check before any model is touched. Figure
 \ref{fig:protocol} shows the naturally observed diagnosis spaces and targets
 retained by the support rule.
 
@@ -113,11 +113,10 @@ shift. CPR-Coach is the closest direct composition formulation
 \cite{wang2024cpr}; its isolated-error training regime differs from our naturally
 multi-error training pool.
 
-Learnable Motion-Focused Tokenization (LMFT) drops low-motion RGB patches to
-reduce background-driven video domain shift \cite{liu2026lmft}. Our normalized
-pose input contains no scene background, while static joint configurations can
-define form errors. LMFT is therefore an adjacent evidence-selection principle,
-not a directly matched method or baseline for diagnosis-composition shift.
+Learnable Motion-Focused Tokenization drops low-motion RGB patches to reduce
+background-driven video domain shift \cite{liu2026lmft}; our pose input has no
+scene background, so this is an adjacent evidence-selection principle, not a
+matched baseline here.
 
 \subsection{Multi-label shortcuts and unseen combinations}
 Multi-label models often exploit label dependence. Compositional multi-label
@@ -125,7 +124,11 @@ classification explicitly holds out label combinations \cite{chai2024composition
 while counterfactual and correlation-shortcut work studies harmful co-occurrence
 dependence \cite{xie2024counterfactual,fan2023cftc}. We use this literature to
 motivate a diagnostic, not a causal claim: label counts characterize exposure in
-the benchmark and never enter the exercise classifier.
+the benchmark and never enter the exercise classifier. Per-criterion opposing-state
+support is ordinary class imbalance, linked to degraded minority-state
+generalization \cite{buda2018systematic,he2009imbalance,cui2019classbalanced};
+our contribution is showing it subsumes a more localized label-neighborhood
+account under composition shift.
 
 \section{Data and Protocol}
 \subsection{Dataset and preprocessing audit}
@@ -292,9 +295,9 @@ micro-F1 pooled across criterion decisions. Macro-F1 is omitted because every
 criterion has one constant state inside a target fold; fold-level macro-F1 is
 not a meaningful discrimination measure in this protocol. ``Bit'' is the
 fraction of all criterion decisions that are correct; ``Exact'' requires every
-criterion of a repetition to be correct. Thus FACT's 64.89 LOCO Bit but 5.14
-Exact means that 64.89\% of individual decisions are correct while only 5.14\%
-of complete diagnosis vectors are correct.
+criterion of a repetition to be correct---so FACT's 64.89\% LOCO Bit but 5.14\%
+Exact means most individual decisions are right while few complete diagnoses
+are.
 
 \begin{table}[t]
 \centering
@@ -329,9 +332,10 @@ count is descriptive, but these data favor the simpler marginal-support account.
 
 The association is practically large: among the 67 target--criterion units,
 the bottom $G_c$ quartile (least opposed) averages 82.70\% held-out accuracy
-versus 40.79\% for the top quartile (most opposed). Because $G_c$ needs only
-training labels, this doubles as a pre-training audit for a proposed
-diagnosis composition, computed without running an experiment.
+versus 40.79\% for the top quartile (most opposed). $G_c$ is an ordinary
+imbalance count over training labels, so this confirms---rather than
+introduces---a training-free audit signal for a proposed diagnosis composition,
+available without running an experiment.
 
 \section{Discussion}
 The matched comparison changes the evidential strength of the study: target
@@ -341,48 +345,41 @@ models; ST-GCN's low full-target exact match further shows that explicit skeleto
 topology is not by itself a remedy.
 
 The control analysis also changes the mechanism claim. LOP reliably describes
-which bit fails, but it is partly a proxy for ordinary criterion-state imbalance.
-Reporting the stronger $G_c$ control and null partial result prevents a local
-label-neighborhood association from being mistaken for unique or causal
-evidence. This reframes the diagnostic contribution rather than weakening it:
-the practical takeaway is not a mechanism story about label neighborhoods but
-that ordinary criterion-state imbalance, on its own, predicts held-out failure
-well enough to serve as a deployment-time checklist item requiring no training
-run.
+which bit fails, but it is largely a proxy for ordinary criterion-state
+imbalance (Sec.~II-B). The practical takeaway is therefore not a
+label-neighborhood mechanism but that plain imbalance, on its own, predicts
+held-out failure well enough to serve as a deployment-time check requiring no
+training run.
 
 \section{Limitations}
-The study has one multi-label composition dataset and only 12 eligible diagnosis
-units. The split key identifies paired recordings, not verified participants, so
-we claim recording-pair rather than participant separation. The matched test uses
-three test groups per diagnosis and exchanges examples rather than preserving
-identical criterion marginals. Optimization roughly halves the mean worst-criterion
-count difference, but residual imbalance prevents a causal interpretation. Manual
-criterion--anatomy mappings affect FACT,
-which is why FACT is only a comparator. Thresholds are fixed at 0.5, and no claim
-is made about calibrated probabilities. Missing-frame rates reach 14.87\%
-in the squat lateral view; interpolation reduces but cannot eliminate uncertainty
-from pose-detector failures. The $G_c$ quartile split (17 units per quartile) reuses the RQ2 sample, so it
-is descriptive, not an independent validation of the audit statistic. Finally,
-exact match is clinically intuitive but harsh; it is reported alongside bit
-accuracy and micro-F1.
+The study has one multi-label composition dataset and only 12 eligible
+diagnosis units. The split key identifies paired recordings, not verified
+participants. The matched test uses three test groups per diagnosis and
+exchanges examples rather than preserving identical marginals; optimization
+roughly halves the mean worst-criterion difference, but residual imbalance
+prevents a causal interpretation. Manual criterion--anatomy mappings affect
+FACT, which is why it is only a comparator. Thresholds are fixed at 0.5, with
+no calibrated-probability claim. Missing-frame rates reach 14.87\% in the
+squat lateral view; interpolation reduces but cannot eliminate pose-detector
+uncertainty. The $G_c$ quartile split (17 units/quartile) reuses the RQ2
+sample, so it is descriptive, not independent validation. Exact match is
+clinically intuitive but harsh; we also report bit accuracy and micro-F1.
 
 \section{Conclusion}
 On identical held-out recordings, removing a natural diagnosis from matched
 training reduces exact match by 21.13 points across four architecture families,
 even after criterion-marginal differences are substantially reduced.
 ST-GCN and anatomical tokens do not eliminate the broader stress-test gap.
-Label-space analysis predicts vulnerable criteria, and the simplest available
-statistic---marginal opposing-state support, not local one-bit
-opposition---does the predicting. The result is a reproducible composition
-test, an evidence-bounded diagnosis of its failure, and a practical,
-training-free audit statistic a practitioner can compute before touching a
-model.
+Label-space analysis predicts vulnerable criteria, and ordinary training-label
+imbalance---not local one-bit opposition---does the predicting. The result is
+a reproducible composition test, an evidence-bounded diagnosis of its failure,
+and confirmation that this known imbalance signal, not label-neighborhood
+structure, is the practical, training-free check a practitioner can run
+before touching a model.
 
+\enlargethispage{\baselineskip}
 \begin{thebibliography}{99}
-\bibitem{hassan2025alexgym} A. Hassan, A. Serour, A. Gamea, and W. Gomaa,
-``ALEX-GYM-1: A novel dataset and hybrid 3D pose vision model for automated
-exercise evaluation,'' in \emph{Proc. ICINCO}, 2025, pp. 24--34.
-
+\footnotesize
 \bibitem{wang2024cpr} J. Wang \emph{et al.}, ``CPR-Coach: Recognizing composite
 error actions based on single-class training,'' in \emph{Proc. IEEE/CVF CVPR},
 2024.
@@ -390,6 +387,10 @@ error actions based on single-class training,'' in \emph{Proc. IEEE/CVF CVPR},
 \bibitem{chai2024compositional} Y. Chai \emph{et al.}, ``Compositional
 generalization for multi-label text classification,'' in \emph{Proc. AAAI},
 2024.
+
+\bibitem{hassan2025alexgym} A. Hassan \emph{et al.}, ``ALEX-GYM-1: A novel
+dataset and hybrid 3D pose vision model for automated exercise evaluation,''
+in \emph{Proc. ICINCO}, 2025, pp. 24--34.
 
 \bibitem{capecci2019kimore} M. Capecci \emph{et al.}, ``The KIMORE dataset:
 Kinematic assessment of movement and clinical scores for remote monitoring of
@@ -411,15 +412,25 @@ CVPR}, 2022.
 spatio-temporal action parser for human-centric action quality assessment,'' in
 \emph{Proc. IEEE/CVF CVPR}, 2024.
 
+\bibitem{liu2026lmft} T. L. Liu, I. Stavness, and M. Rochan, ``Learnable
+motion-focused tokenization for effective and efficient video unsupervised
+domain adaptation,'' in \emph{Proc. IEEE/CVF CVPR}, 2026.
+
 \bibitem{xie2024counterfactual} B. Xie \emph{et al.}, ``Counterfactual
 multi-label learning,'' in \emph{Proc. ICML}, 2024.
 
 \bibitem{fan2023cftc} Z. Fan \emph{et al.}, ``CFTC: Combating label correlation
 shortcut in multi-label classification,'' arXiv:2310.07588, 2023.
 
-\bibitem{liu2026lmft} T. L. Liu, I. Stavness, and M. Rochan, ``Learnable
-motion-focused tokenization for effective and efficient video unsupervised
-domain adaptation,'' in \emph{Proc. IEEE/CVF CVPR}, 2026.
+\bibitem{buda2018systematic} M. Buda, A. Maciejewski, and M. A. Mazurowski,
+``A systematic study of the class imbalance problem in CNNs,'' \emph{Neural
+Networks}, vol. 106, pp. 249--259, 2018.
+
+\bibitem{he2009imbalance} H. He and E. A. Garcia, ``Learning from imbalanced
+data,'' \emph{IEEE Trans. Knowl. Data Eng.}, vol. 21, no. 9, 2009.
+
+\bibitem{cui2019classbalanced} Y. Cui \emph{et al.}, ``Class-balanced loss
+based on effective number of samples,'' in \emph{Proc. IEEE/CVF CVPR}, 2019.
 
 \end{thebibliography}
 \end{document}
