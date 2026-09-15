@@ -3,6 +3,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.stats import spearmanr
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,19 +51,60 @@ def rq2() -> None:
 
 
 def matched() -> None:
+    """Per-target matched pairs, plus the gap against residual marginal imbalance.
+
+    The paired view matters more than architecture-average bars because the
+    statistical unit is the held-out diagnosis and there are only twelve of
+    them. Panel (b) addresses the obvious alternative explanation directly: if
+    the residual post-exchange marginal mismatch drove the effect, the largest
+    gaps would sit at the largest mismatch.
+    """
     df = pd.read_csv(ROOT / "results/matched_composition_v3_optimized/target_mean_metrics.csv", dtype={"target": str})
-    q = df[df.metric == "exact_match"]
-    means = q.groupby(["model", "condition"]).value.mean().unstack().reindex(MODELS[:4]) * 100
-    fig, ax = plt.subplots(figsize=(5.1, 2.8))
-    x = range(4)
-    ax.bar([i - .18 for i in x], means.seen, width=.36, label="Target seen in training", color="#3f7f93")
-    ax.bar([i + .18 for i in x], means.unseen, width=.36, label="Target absent from training", color="#d66b55")
-    ax.set_xticks(list(x), LABELS[:4])
-    ax.set_ylabel("Exact diagnosis match (%)")
-    ax.spines[["top", "right"]].set_visible(False)
-    ax.legend(frameon=False, fontsize=8)
-    fig.tight_layout()
-    fig.savefig(OUT / "matched_exact.pdf", bbox_inches="tight")
+    pairs = (df[df.metric == "exact_match"]
+             .groupby(["exercise", "target", "condition"]).value.mean()
+             .unstack().mul(100).reset_index())
+    balance = pd.read_csv(ROOT / "results/matched_composition_v3_optimized/balance_audit.csv", dtype={"target": str})
+    pairs = pairs.merge(
+        balance.groupby(["exercise", "target"], as_index=False).optimized_max.mean(),
+        on=["exercise", "target"],
+    )
+    pairs["gap"] = pairs.seen - pairs.unseen
+    colors = {"squat": "#3f7f93", "deadlift": "#d66b55"}
+
+    # Authored at final IEEE column width so LaTeX does not downscale the text.
+    # Panel labels sit inside the axes rather than as titles: a title row costs
+    # vertical space the paper's four-page budget does not have.
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(3.5, 1.45))
+    for _, row in pairs.iterrows():
+        ax1.plot([0, 1], [row.seen, row.unseen], marker="o", ms=2.4, lw=.8,
+                 color=colors[row.exercise], alpha=.85)
+    ax1.set_xlim(-.32, 1.32)
+    ax1.set_xticks([0, 1])
+    ax1.set_xticklabels(["Present", "Absent"], fontsize=7)
+    ax1.set_ylabel("Exact match (%)", fontsize=7)
+    ax1.text(.97, .93, f"(a) {len(pairs)}/{len(pairs)} fall", transform=ax1.transAxes,
+             ha="right", va="top", fontsize=7)
+
+    for exercise, group in pairs.groupby("exercise"):
+        ax2.scatter(group.optimized_max, group.gap, s=11, alpha=.85,
+                    color=colors[exercise], label=exercise.capitalize())
+    # Round before ranking: two squat targets have an exactly tied gap (25/3 pp),
+    # and float noise of ~1e-15 from a different summation order would untie them
+    # and move rho from -.27 to -.26. Rounding keeps the tie, and the value, stable.
+    rho = spearmanr(pairs.optimized_max.round(9), pairs.gap.round(9)).statistic
+    ax2.set_xlabel("Residual mismatch", fontsize=7)
+    ax2.set_ylabel("Gap (pp)", fontsize=7)
+    ax2.text(.97, .93, rf"(b) $\rho={rho:.2f}$", transform=ax2.transAxes,
+             ha="right", va="top", fontsize=7)
+    ax2.legend(frameon=False, fontsize=6, handletextpad=.3, borderpad=.2,
+               loc="center right")
+
+    for ax in (ax1, ax2):
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.tick_params(labelsize=6, length=2.5, pad=1.5)
+    fig.tight_layout(pad=.3, w_pad=.8)
+    # PNG only: the paper draws this figure natively in LaTeX (see main.tex), so
+    # the vector copy had no consumer. This one is the README's.
     fig.savefig(OUT / "matched_exact.png", dpi=220, bbox_inches="tight")
     plt.close(fig)
 

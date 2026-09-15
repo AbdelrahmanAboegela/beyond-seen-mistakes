@@ -74,7 +74,9 @@ this connects to prior work on class imbalance and compositional generalization.
 The negative LOP result is deliberately reported anyway: it redirects the
 diagnostic from a fancier mechanism story to the simpler, actionable one.
 
-![Matched target-present versus target-absent exact diagnosis match](paper/figures/matched_exact.png)
+![Per-target matched pairs, and the gap against residual marginal imbalance](paper/figures/matched_exact.png)
+
+Left: each line is one of the 12 held-out diagnoses, with exact match when its composition is present in training versus absent. All 12 fall. Right: the same per-target gaps plotted against the residual criterion-marginal mismatch the exchange optimization could not remove — the largest gaps occur at the *smallest* residual mismatch (ρ=-.26), which is the opposite of what you would see if leftover imbalance, rather than the missing composition, were driving the effect. The paper draws this figure natively in LaTeX; this PNG is the same data rendered for the README.
 
 ## Glossary
 

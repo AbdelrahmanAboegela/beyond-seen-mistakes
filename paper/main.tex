@@ -7,6 +7,11 @@
 \usepackage{microtype}
 \usepackage{xcolor}
 \usepackage{url}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots}
+\definecolor{sqc}{HTML}{3F7F93}
+\definecolor{dlc}{HTML}{D66B55}
 \newcommand{\loco}{LOCO}
 \newcommand{\pressure}{LOP}
 \setlength{\textfloatsep}{7pt plus 2pt minus 2pt}
@@ -25,13 +30,15 @@ yet grouped evaluation does not isolate whether a familiar diagnosis was present
 in training. We introduce a recording-pair-disjoint matched test on public
 ALEX-GYM-1 poses. For each of 12 natural diagnoses, target-present and
 target-absent models use identical test recordings, validation data,
-initialization, class weights, and training-set size. Across TCN, BiGRU,
-Transformer, and state-space backbones, an optimized exchange minimizes residual
-criterion-marginal differences. Removing target-diagnosis examples then lowers
-exact diagnosis match from 22.65\% to 1.52\% (target bootstrap gap 21.13 points,
-95\% CI $[9.86,34.73]$; two-sided $p=.00049$); bit accuracy falls 12.80 points.
-A six-model stress test, including ST-GCN and an anatomical-token model, shows
-that topology and locality do not eliminate the failure. A label-space audit
+initialization, class weights, and training-set size. Across four temporal
+backbones---TCN, BiGRU, Transformer, and state-space---an optimized exchange
+minimizes residual criterion-marginal differences. Removing target-diagnosis
+examples then lowers exact diagnosis match from 22.65\% to 1.52\% (target
+bootstrap gap 21.13 points, 95\% CI $[9.86,34.73]$; two-sided $p=.00049$); bit
+accuracy falls 12.80 points. Every target falls, and the largest gaps occur
+where residual imbalance is smallest. A separate six-model full-target stress
+test, adding ST-GCN and an anatomical-token model, shows that topology and
+locality do not eliminate the broader failure. A label-space audit
 finds that one-bit opposing neighbors predict vulnerable criteria across models,
 but a far simpler statistic---the raw count of training examples opposing a
 criterion's target state---is a stronger predictor ($\rho=-.742$) and absorbs
@@ -59,11 +66,10 @@ individually familiar criterion states remain recognizable when they occur in a
 new combination.
 
 The distinction is easy to miss. A recording-disjoint random split protects
-against direct source overlap, but it does not deliberately hold out a chosen
-diagnosis vector. A model can therefore obtain reasonable marginal accuracy
-while using pose patterns correlated with entire diagnoses. This matters for
-feedback: one systematically wrong criterion invalidates an otherwise plausible
-diagnosis.
+against source overlap but does not deliberately hold out a chosen diagnosis
+vector, so a model can obtain reasonable marginal accuracy while using pose
+patterns correlated with entire diagnoses. This matters for feedback: one
+systematically wrong criterion invalidates an otherwise plausible diagnosis.
 
 Composite errors have been studied directly by CPR-Coach, which trains on
 isolated error classes and tests synthetically enumerated composites
@@ -161,8 +167,8 @@ respectively. We linearly
 interpolate whole missing frames before pelvis centering, robust body-scale
 normalization, and resampling to 16 frames. One squat repetition has no valid
 frontal frame and is excluded. Raw-file SHA-256 hashes, the exclusion, and
-per-sequence quality counts are released. We do not impute isolated zero joints,
-whose semantics cannot be verified from the release.
+per-sequence quality counts are released. Isolated zero joints are not imputed,
+since their semantics cannot be verified.
 
 \subsection{Observed-composition holdout}
 For exercise $e$, let $s_i$ identify a paired frontal/lateral recording and
@@ -182,9 +188,9 @@ while one also enters validation. They are excluded rather than evaluated under 
 different rule. The primary experiment is therefore 12 targets $\times$ three
 seeds per model.
 
-Ordinary validation is retained as a secondary stress-test comparator, but it is
-not a pure seen-composition control: 409 of 1,760 validation rows (23.2\%) have a
-diagnosis absent from that fold's training subset.
+Ordinary validation is a secondary comparator, not a pure seen-composition
+control: 409 of 1,760 validation rows (23.2\%) have a diagnosis absent from
+that fold's training subset.
 
 \subsection{Matched composition-presence test}
 RQ1 instead holds the evaluation data fixed. For each target and seed, one target
@@ -211,8 +217,8 @@ $\times$ xyz). The TCN uses a 96-D frame embedding, temporal kernels 5 and 3,
 and mean/max pooling. BiGRU uses a 72-D bidirectional GRU; Transformer uses two
 96-D, four-head encoder layers; and SSM uses one 32-D bidirectional selective
 scan. Their deadlift models contain 112k, 99k, 190k, and 13k parameters,
-respectively. The SSM is a compact study implementation rather than an official
-reproduction of a named large model. ST-GCN applies two spatial graph/temporal
+respectively. The SSM is a compact study implementation, not an official
+reproduction. ST-GCN applies two spatial graph/temporal
 convolution blocks to each MediaPipe view using the physical skeleton edges,
 then fuses pooled view features (35k deadlift parameters).
 
@@ -221,15 +227,15 @@ the annotation wording specifies one view and an initial joint set. A learned
 residual adjusts a sigmoid mask initialized near .95 on mapped joints and .05
 elsewhere. Separate frontal/lateral encoders apply a 56-D frame projection,
 temporal convolutions of width 5 and 3, and mean/max pooling. A criterion-specific
-$112\!\rightarrow\!32$ adapter produces one token per criterion. Its logit sums
-a local linear score and a scaled distance difference to two learned 32-D state
-prototypes. FACT never consumes other labels or logits at inference and contains
-84,858 parameters for squat and 81,048 for deadlift. It is a locality-oriented
-comparator, not a claimed generally superior architecture.
+$112\!\rightarrow\!32$ adapter produces one token per criterion, whose logit sums
+a local linear score and a scaled distance to two learned 32-D state prototypes.
+FACT never consumes other labels at inference and has 84,858 squat and 81,048
+deadlift parameters. It is a locality-oriented comparator, not a claimed
+superior architecture.
 
-Every model receives the same normalized two-view representation and split.
-Models use class-weighted binary cross-entropy, AdamW, fixed 0.5 thresholds, and
-early stopping on validation macro-F1. Hyperparameters are never selected using
+Every model receives the same representation and split, with class-weighted
+binary cross-entropy, AdamW, fixed 0.5 thresholds, and early stopping on
+validation macro-F1. Hyperparameters are never selected using
 the held-out target. We report target-equal means: seeds are averaged within
 target, then all 12 targets receive equal weight. All primary trainers call the
 same deterministic constrained splitter. The released manifest records raw-file
@@ -277,12 +283,69 @@ The original random-exchange analysis gives a compatible 25.44-point exact-match
 gap (CI $[17.31,33.32]$). RQ1 is therefore supported without comparing different
 evaluation distributions and is robust to substantially improved marginal balance.
 
+Figure \ref{fig:matched} resolves the 12 targets individually. All 12 fall, and
+residual imbalance does not account for the effect: the two largest gaps
+(68.61, 65.56 points) sit at two of the smallest residual mismatches (7.7, 3.7
+counts), and the gap--mismatch rank association is negative ($\rho=-.26$),
+opposite the confound's prediction. At 12 targets this is suggestive, not
+decisive.
+
+% Coordinates are the per-target means in
+% results/matched_composition_v3_optimized/{target_mean_metrics,balance_audit}.csv,
+% averaged over the four matched backbones and three seeds. They are verified
+% against those files by tests/test_paper_figure_data.py.
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/matched_exact.pdf}
-\caption{Exact diagnosis match on identical held-out recording groups. Training
-size, class weights, initialization, validation, and test rows are matched; exchanged
-rows are selected by the marginal-reducing optimization.}
+\begin{tikzpicture}[
+  sq/.style={color=sqc, mark=*, mark size=.7pt},
+  dl/.style={color=dlc, mark=*, mark size=.7pt}]
+\begin{groupplot}[
+  group style={group size=2 by 1, horizontal sep=1.05cm},
+  width=3.15cm, height=2.35cm, scale only axis, /tikz/font=\tiny,
+  axis x line*=bottom, axis y line*=left,
+  axis line style={line width=.3pt}, tick style={line width=.3pt},
+  every axis plot/.append style={line width=.35pt},
+  title style={font=\tiny, yshift=-.7ex},
+  label style={font=\tiny}, tick label style={font=\tiny}]
+\nextgroupplot[
+  xmin=-.32, xmax=1.32, ymin=-5, ymax=77,
+  xtick={0,1}, xticklabels={Present,Absent},
+  ytick={0,20,40,60}, ylabel={Exact match (\%)},
+  title={(a) 12/12 targets fall}]
+\addplot[dl] coordinates {(0,6.6667) (1,0.0000)};
+\addplot[dl] coordinates {(0,6.2500) (1,0.0000)};
+\addplot[dl] coordinates {(0,13.8889) (1,0.0000)};
+\addplot[dl] coordinates {(0,68.6111) (1,0.0000)};
+\addplot[dl] coordinates {(0,10.8333) (1,0.0000)};
+\addplot[sq] coordinates {(0,5.5556) (1,0.0000)};
+\addplot[sq] coordinates {(0,3.3333) (1,0.0000)};
+\addplot[sq] coordinates {(0,11.6667) (1,3.3333)};
+\addplot[sq] coordinates {(0,68.3333) (1,2.7778)};
+\addplot[sq] coordinates {(0,28.3333) (1,6.6667)};
+\addplot[sq] coordinates {(0,36.6667) (1,2.0833)};
+\addplot[sq] coordinates {(0,11.6667) (1,3.3333)};
+\nextgroupplot[
+  xmin=0, xmax=32, ymin=-5, ymax=77,
+  xtick={0,10,20,30}, ytick={0,20,40,60},
+  xlabel={Residual mismatch}, ylabel={Gap (pp)},
+  title={(b) $\rho=-.26$},
+  legend style={font=\tiny, draw=none, fill=none, at={(1.02,1.06)},
+    anchor=north east, row sep=-3pt, inner sep=1pt},
+  legend image post style={mark size=1.1pt}]
+\addplot[only marks, mark=*, mark size=1.1pt, color=sqc] coordinates
+  {(3.3333,5.5556) (15.6667,3.3333) (5.0000,8.3333) (3.6667,65.5556)
+   (13.3333,21.6667) (11.6667,34.5833) (9.0000,8.3333)};
+\addlegendentry{Squat}
+\addplot[only marks, mark=*, mark size=1.1pt, color=dlc] coordinates
+  {(29.0000,6.6667) (23.6667,6.2500) (5.0000,13.8889) (7.6667,68.6111)
+   (3.6667,10.8333)};
+\addlegendentry{Deadlift}
+\end{groupplot}
+\end{tikzpicture}
+\caption{(a) Exact diagnosis match for each of the 12 held-out diagnoses, under
+matched training size, class weights, initialization, validation and test rows.
+(b) The same gaps against the residual worst-criterion mismatch the exchange
+optimization could not remove. Color marks exercise.}
 \label{fig:matched}
 \end{figure}
 
@@ -290,10 +353,9 @@ The secondary full-target stress test still measures a harder distributional
 setting. Table \ref{tab:models} shows that FACT has the largest mean bit accuracy and exact
 match, but its advantage over TCN is unresolved: $+1.85$ bit points ($p=.204$)
 and $+2.75$ exact points ($p=.086$) in two-sided exploratory comparisons. We
-therefore make no architecture-superiority claim. Table \ref{tab:models} reports
-micro-F1 pooled across criterion decisions. Macro-F1 is omitted because every
-criterion has one constant state inside a target fold; fold-level macro-F1 is
-not a meaningful discrimination measure in this protocol. ``Bit'' is the
+therefore make no architecture-superiority claim. Micro-F1 is pooled across
+criterion decisions; macro-F1 is omitted because every criterion has one
+constant state inside a target fold, making it meaningless here. ``Bit'' is the
 fraction of all criterion decisions that are correct; ``Exact'' requires every
 criterion of a repetition to be correct---so FACT's 64.89\% LOCO Bit but 5.14\%
 Exact means most individual decisions are right while few complete diagnoses
@@ -338,11 +400,11 @@ introduces---a training-free audit signal for a proposed diagnosis composition,
 available without running an experiment.
 
 \section{Discussion}
-The matched comparison changes the evidential strength of the study: target
-presence is varied while evaluation recordings and training budget are fixed.
-The effect appears in convolutional, recurrent, attention, and state-space
-models; ST-GCN's low full-target exact match further shows that explicit skeleton
-topology is not by itself a remedy.
+The matched comparison changes the evidential strength: target presence is
+varied while evaluation recordings and training budget are fixed. The effect
+appears in convolutional, recurrent, attention, and state-space models, and
+ST-GCN's low full-target exact match shows explicit skeleton topology is not by
+itself a remedy.
 
 The control analysis also changes the mechanism claim. LOP reliably describes
 which bit fails, but it is largely a proxy for ordinary criterion-state
@@ -374,10 +436,10 @@ Label-space analysis predicts vulnerable criteria, and ordinary training-label
 imbalance---not local one-bit opposition---does the predicting. The result is
 a reproducible composition test, an evidence-bounded diagnosis of its failure,
 and confirmation that this known imbalance signal, not label-neighborhood
-structure, is the practical, training-free check a practitioner can run
-before touching a model.
+structure, is what predicts failure here---a training-free check worth running
+before a model is trained.
 
-\enlargethispage{\baselineskip}
+\enlargethispage{3\baselineskip}
 \begin{thebibliography}{99}
 \footnotesize
 \bibitem{wang2024cpr} J. Wang \emph{et al.}, ``CPR-Coach: Recognizing composite
