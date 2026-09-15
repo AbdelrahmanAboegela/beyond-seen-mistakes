@@ -42,13 +42,11 @@ locality do not eliminate the broader failure. A label-space audit
 finds that one-bit opposing neighbors predict vulnerable criteria across models,
 but a far simpler statistic---the raw count of training examples opposing a
 criterion's target state---is a stronger predictor ($\rho=-.742$) and absorbs
-the local count's association entirely ($p=.200$ once controlled), separating
-an 82.70\% bottom-quartile criterion from a 40.79\% top-quartile one. The
-contribution
-is therefore a controlled composition test, an evidence-bounded diagnosis of
-its failure, and confirmation---not introduction---of a known imbalance
-signal that flags which criteria of a planned diagnosis are likely to fail
-before training.
+the local count's association entirely ($p=.200$ once controlled). The
+contribution is therefore a controlled composition test, an evidence-bounded
+diagnosis of its failure, and confirmation---not introduction---of a known
+imbalance signal that flags which criteria of a planned diagnosis are likely to
+fail before training.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -78,7 +76,10 @@ multi-label learning \cite{chai2024compositional}. Our setting is narrower and
 naturalistic: training remains multi-error, every evaluated criterion state has
 training support, and test diagnoses are naturally observed in a public
 two-view exercise dataset, so we do not claim the first composite-error task
-or combination split.
+or combination split. The difference is the control: a conventional composition
+split asks whether unseen combinations are harder, whereas we hold the
+evaluation recordings fixed and ask whether they become harder when that one
+diagnosis is removed from otherwise supported training.
 
 We organize the study around two retrospective questions. \textbf{RQ1} asks
 whether removing a target diagnosis from training reduces performance on the
@@ -130,11 +131,12 @@ classification explicitly holds out label combinations \cite{chai2024composition
 while counterfactual and correlation-shortcut work studies harmful co-occurrence
 dependence \cite{xie2024counterfactual,fan2023cftc}. We use this literature to
 motivate a diagnostic, not a causal claim: label counts characterize exposure in
-the benchmark and never enter the exercise classifier. Per-criterion opposing-state
-support is ordinary class imbalance, linked to degraded minority-state
-generalization \cite{buda2018systematic,he2009imbalance,cui2019classbalanced};
-our contribution is showing it subsumes a more localized label-neighborhood
-account under composition shift.
+the benchmark and never enter the exercise classifier. Opposing-state support is
+target-relative criterion-state imbalance, an ordinary quantity whose link to
+degraded minority-state generalization is established
+\cite{buda2018systematic,he2009imbalance,cui2019classbalanced}; our contribution
+is showing it subsumes a more localized label-neighborhood account under
+composition shift.
 
 \section{Data and Protocol}
 \subsection{Dataset and preprocessing audit}
@@ -160,10 +162,8 @@ Lunge & 106 & 7 & 30 & 53\\
 \end{tabular}
 \end{table}
 
-All-zero frames occur in both views: squat has 183/4,720 frontal (3.88\%) and
-702/4,720 lateral frames (14.87\%); deadlift has 250/4,304 (5.81\%) and
-326/4,304 (7.57\%); and lunge has 33/1,696 (1.95\%) and 214/1,696 (12.62\%),
-respectively. We linearly
+All-zero frames occur in both views, ranging from 1.95\% (lunge frontal) to
+14.87\% (squat lateral); per-exercise, per-view counts are released. We linearly
 interpolate whole missing frames before pelvis centering, robust body-scale
 normalization, and resampling to 16 frames. One squat repetition has no valid
 frontal frame and is excluded. Raw-file SHA-256 hashes, the exclusion, and
@@ -183,9 +183,9 @@ validation--test group intersections are zero in every fold.
 A target is eligible when it has at least ten repetitions, three source groups,
 and a feasible supported split. Seven squat and five deadlift diagnoses qualify.
 Two lunge diagnoses considered by the earlier protocol are infeasible: their
-minority pool contains exactly eight examples, so eight cannot remain in training
-while one also enters validation. They are excluded rather than evaluated under a
-different rule. The primary experiment is therefore 12 targets $\times$ three
+minority pool holds exactly eight examples, so eight cannot remain in training
+while one also enters validation. They are excluded rather than evaluated under
+a weaker rule. The primary experiment is therefore 12 targets $\times$ three
 seeds per model.
 
 Ordinary validation is a secondary comparator, not a pure seen-composition
@@ -222,16 +222,13 @@ reproduction. ST-GCN applies two spatial graph/temporal
 convolution blocks to each MediaPipe view using the physical skeleton edges,
 then fuses pooled view features (35k deadlift parameters).
 
-FACT reshapes each sequence to $2\times16\times33\times3$. For criterion $c$,
-the annotation wording specifies one view and an initial joint set. A learned
-residual adjusts a sigmoid mask initialized near .95 on mapped joints and .05
-elsewhere. Separate frontal/lateral encoders apply a 56-D frame projection,
-temporal convolutions of width 5 and 3, and mean/max pooling. A criterion-specific
-$112\!\rightarrow\!32$ adapter produces one token per criterion, whose logit sums
-a local linear score and a scaled distance to two learned 32-D state prototypes.
-FACT never consumes other labels at inference and has 84,858 squat and 81,048
-deadlift parameters. It is a locality-oriented comparator, not a claimed
-superior architecture.
+FACT routes each criterion to the view and joint set its annotation wording
+names, through a learned residual on a sigmoid mask, then pools per-view
+temporal evidence into one 32-D token per criterion, decoded by a local linear
+score plus a learned two-state prototype distance. It never consumes other
+labels at inference and has 84,858 squat and 81,048 deadlift parameters. It is
+a locality-oriented comparator, not a claimed superior architecture; exact
+layer dimensions are in the released code.
 
 Every model receives the same representation and split, with class-weighted
 binary cross-entropy, AdamW, fixed 0.5 thresholds, and early stopping on
@@ -284,11 +281,12 @@ gap (CI $[17.31,33.32]$). RQ1 is therefore supported without comparing different
 evaluation distributions and is robust to substantially improved marginal balance.
 
 Figure \ref{fig:matched} resolves the 12 targets individually. All 12 fall, and
-residual imbalance does not account for the effect: the two largest gaps
-(68.61, 65.56 points) sit at two of the smallest residual mismatches (7.7, 3.7
-counts), and the gap--mismatch rank association is negative ($\rho=-.26$),
-opposite the confound's prediction. At 12 targets this is suggestive, not
-decisive.
+residual mismatch does not track the effect: the two largest gaps (68.61,
+65.56 points) sit at two of the smallest residual mismatches (7.7, 3.7 counts),
+and the gap--mismatch rank association is negative ($\rho=-.26$), opposite the
+confound's prediction. This is evidence against residual marginal mismatch
+being the main explanation, not a demonstration that no confounding remains; at
+12 targets it is suggestive, not decisive.
 
 % Coordinates are the per-target means in
 % results/matched_composition_v3_optimized/{target_mean_metrics,balance_audit}.csv,
@@ -394,10 +392,9 @@ count is descriptive, but these data favor the simpler marginal-support account.
 
 The association is practically large: among the 67 target--criterion units,
 the bottom $G_c$ quartile (least opposed) averages 82.70\% held-out accuracy
-versus 40.79\% for the top quartile (most opposed). $G_c$ is an ordinary
-imbalance count over training labels, so this confirms---rather than
-introduces---a training-free audit signal for a proposed diagnosis composition,
-available without running an experiment.
+versus 40.79\% for the top quartile (most opposed). $G_c$ is an ordinary, target-relative imbalance count over
+training labels, so this confirms---rather than introduces---a training-free
+audit signal for a proposed composition, available without running an experiment.
 
 \section{Discussion}
 The matched comparison changes the evidential strength: target presence is
@@ -407,11 +404,11 @@ ST-GCN's low full-target exact match shows explicit skeleton topology is not by
 itself a remedy.
 
 The control analysis also changes the mechanism claim. LOP reliably describes
-which bit fails, but it is largely a proxy for ordinary criterion-state
+which bit fails, but it is largely a proxy for target-relative criterion-state
 imbalance (Sec.~II-B). The practical takeaway is therefore not a
-label-neighborhood mechanism but that plain imbalance, on its own, predicts
-held-out failure well enough to serve as a deployment-time check requiring no
-training run.
+label-neighborhood mechanism but that this ordinary quantity, on its own,
+predicts held-out failure well enough to serve as a deployment-time check
+requiring no training run.
 
 \section{Limitations}
 The study has one multi-label composition dataset and only 12 eligible
