@@ -29,11 +29,18 @@ from train_backbones import DS, build, metrics, pred
 CPR_EXERCISE = "cpr"
 
 
-def load_dataset(data, exercise, T=16):
-    """Return ``(X, Y, compositions, groups)`` for either dataset."""
+def load_dataset(data, exercise, T=16, with_rate=False):
+    """Return ``(X, Y, compositions, groups)`` for either dataset.
+
+    ``with_rate`` appends the duration/speed/cadence statistics that
+    fixed-length resampling destroys (see temporal_features).  It is off by
+    default so the published protocol is reproduced exactly.
+    """
     if exercise == CPR_EXERCISE:
-        X, Y, compositions, groups, _ = load_cpr(data, T=T)
+        X, Y, compositions, groups, _ = load_cpr(data, T=T, with_rate=with_rate)
         return X, Y, compositions, groups
+    if with_rate:
+        raise NotImplementedError("rate features are wired for CPR-Coach only so far")
     X, Y, compositions, groups, _ = load_exercise(data, exercise, T=T)
     return X, Y, compositions, groups
 
@@ -234,8 +241,8 @@ def train_condition(X, Y, train, val, test, kind, seed, shared_pos_weight, epoch
             "train_seconds": time.time() - started, "n_params": sum(p.numel() for p in model.parameters())}
 
 
-def run(exercise, target, seed, model, data, epochs=55, manifest=None):
-    X, Y, compositions, groups = load_dataset(data, exercise, T=16)
+def run(exercise, target, seed, model, data, epochs=55, manifest=None, with_rate=False):
+    X, Y, compositions, groups = load_dataset(data, exercise, T=16, with_rate=with_rate)
     if manifest:
         seen, unseen, val, test, audit = make_optimized_manifest_split(
             Y, compositions, groups, exercise, target, seed, manifest)
@@ -245,7 +252,8 @@ def run(exercise, target, seed, model, data, epochs=55, manifest=None):
         seen, unseen, val, test, audit = make_matched_split(Y, compositions, groups, target, seed)
     # Identical initialization seed isolates the training-set composition change.
     result = {"exercise": exercise, "target": target, "seed": seed, "model": model,
-              "criteria": criteria_of(exercise), "split_audit": audit}
+              "criteria": criteria_of(exercise), "with_rate": bool(with_rate),
+              "split_audit": audit}
     common_union = np.union1d(seen, unseen)
     pos = Y[common_union].sum(0); neg = len(common_union) - pos
     shared_pos_weight = np.clip(neg / np.maximum(pos, 1), .25, 8)
@@ -261,6 +269,8 @@ if __name__ == "__main__":
     ap.add_argument("--seed", type=int, required=True); ap.add_argument("--model", default="tcn", choices=["tcn", "gru", "transformer", "ssm", "stgcn"])
     ap.add_argument("--epochs", type=int, default=55); ap.add_argument("--manifest")
     ap.add_argument("--audit-only", action="store_true"); ap.add_argument("--out", required=True)
+    ap.add_argument("--with-rate", action="store_true",
+                    help="append duration/speed/cadence features destroyed by resampling")
     a = ap.parse_args()
     if a.audit_only:
         _, Y, compositions, groups = load_dataset(a.data, a.exercise, T=16)
@@ -268,6 +278,7 @@ if __name__ == "__main__":
             Y, compositions, groups, a.exercise, a.target, a.seed, a.manifest)
         result = {"exercise": a.exercise, "target": a.target, "seed": a.seed, "split_audit": audit}
     else:
-        result = run(a.exercise, a.target, a.seed, a.model, a.data, a.epochs, a.manifest)
+        result = run(a.exercise, a.target, a.seed, a.model, a.data, a.epochs, a.manifest,
+                     with_rate=a.with_rate)
     out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True); out.write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

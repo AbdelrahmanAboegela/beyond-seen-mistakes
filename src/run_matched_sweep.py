@@ -18,6 +18,8 @@ def run_one(task, args):
                "--model", model, "--epochs", str(args.epochs), "--out", str(out)]
     if args.manifest:
         command.extend(["--manifest", args.manifest])
+    if args.with_rate:
+        command.append("--with-rate")
     env = os.environ.copy(); env["PYTHONPATH"] = "src"
     completed = subprocess.run(command, env=env, capture_output=True, text=True, timeout=args.timeout)
     if completed.returncode:
@@ -32,6 +34,7 @@ def main():
     ap.add_argument("--manifest")
     ap.add_argument("--models", default="tcn"); ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--epochs", type=int, default=55); ap.add_argument("--timeout", type=int, default=240)
+    ap.add_argument("--with-rate", action="store_true")
     args = ap.parse_args(); (Path(args.outdir) / "runs").mkdir(parents=True, exist_ok=True)
     protocol = json.loads(Path(args.protocol).read_text()); tasks = []
     for model in args.models.split(","):

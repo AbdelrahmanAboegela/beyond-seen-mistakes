@@ -38,6 +38,9 @@ from pathlib import Path
 
 import numpy as np
 
+from temporal_features import (N_RATE_FEATURES, append_constant_channels,
+                               rate_features, standardize)
+
 PREPROCESS_VERSION = "cpr-coach-v1-halpe26-4ch"
 
 # Label 0 is the correct action; 1..13 are the error criteria, in ActionList order.
@@ -147,7 +150,7 @@ def normalize_pose(x):
     return x / max(scale, 1e-3)
 
 
-def load_cpr(root, T=16, keypoint_files=DEFAULT_KEYPOINT_FILES):
+def load_cpr(root, T=16, keypoint_files=DEFAULT_KEYPOINT_FILES, with_rate=False):
     """Return ``(X, Y, compositions, groups, meta)`` for every repetition.
 
     ``X`` is ``(N, T, n_channels * 26 * 2)``, ``Y`` is ``(N, 13)`` binary error
@@ -155,10 +158,11 @@ def load_cpr(root, T=16, keypoint_files=DEFAULT_KEYPOINT_FILES):
     ``groups`` are composition-pure folder identifiers.
     """
     root = Path(root)
-    cache = root / f"cpr_T{T}.npz"
+    version = PREPROCESS_VERSION + ("-rate" if with_rate else "")
+    cache = root / (f"cpr_T{T}_rate.npz" if with_rate else f"cpr_T{T}.npz")
     if cache.exists():
         z = np.load(cache, allow_pickle=True)
-        if str(z["preprocess_version"].item()) == PREPROCESS_VERSION:
+        if str(z["preprocess_version"].item()) == version:
             return (z["X"], z["Y"], z["co"], z["g"], z["meta"].item())
 
     takes: dict[str, dict] = {}
@@ -198,33 +202,39 @@ def load_cpr(root, T=16, keypoint_files=DEFAULT_KEYPOINT_FILES):
             take["channels"][channel] = seq[:, :N_BODY_JOINTS, :]
 
     channel_names = sorted({c for t in takes.values() for c in t["channels"]})
-    X, Y, groups, keys, dropped = [], [], [], [], []
+    X, Y, groups, keys, dropped, rates = [], [], [], [], [], []
     for key in sorted(takes):
         take = takes[key]
         if set(take["channels"]) != set(channel_names):
             dropped.append({"take": key, "reason": "missing channel",
                             "channels": sorted(take["channels"])})
             continue
-        views, incomplete = [], False
+        views, incomplete, take_rates = [], False, []
         for channel in channel_names:
             seq, valid = fill_missing_frames(take["channels"][channel])
             if not valid.any():
                 incomplete = True
                 break
+            # measured before resampling, which is what destroys these
+            take_rates.append(rate_features(seq))
             views.append(normalize_pose(resample(seq, T)).reshape(T, -1))
         if incomplete:
             dropped.append({"take": key, "reason": "channel with no valid frame"})
             continue
         X.append(np.concatenate(views, axis=-1))
+        rates.append(np.concatenate(take_rates))
         Y.append([1 if (c + 1) in take["labels"] else 0 for c in range(NCRIT)])
         groups.append(take["group"])
         keys.append(key)
 
     X = np.stack(X).astype(np.float32)
+    if with_rate:
+        X = append_constant_channels(X, standardize(np.stack(rates)))
     Y = np.asarray(Y, dtype=np.float32)
     compositions = np.array(["".join(map(str, row.astype(int))) for row in Y])
     groups = np.asarray(groups)
-    meta = {"preprocess_version": PREPROCESS_VERSION, "criteria": CPR_ERRORS,
+    meta = {"preprocess_version": version, "criteria": CPR_ERRORS,
+            "rate_features_per_channel": N_RATE_FEATURES if with_rate else 0,
             "channels": channel_names, "n_takes": len(keys), "dropped": dropped,
             "empty_channels": empty_channels,
             "body_joints": N_BODY_JOINTS, "keys": keys,
@@ -232,7 +242,7 @@ def load_cpr(root, T=16, keypoint_files=DEFAULT_KEYPOINT_FILES):
                                 for k, v in confidence.items()}}
 
     np.savez_compressed(cache, X=X, Y=Y, co=compositions, g=groups,
-                        preprocess_version=PREPROCESS_VERSION,
+                        preprocess_version=version,
                         meta=np.array(meta, dtype=object))
     return X, Y, compositions, groups, meta
 
