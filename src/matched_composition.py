@@ -20,7 +20,26 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from alexgym_data import CRITERIA, load_exercise
+from cpr_data import CPR_ERRORS, load_cpr
 from train_backbones import DS, build, metrics, pred
+
+# CPR-Coach is the external composition check. It has no exercise dimension, so
+# it enters the pipeline as a single pseudo-exercise: the sweep, manifest,
+# aggregation and statistics then run against it untouched.
+CPR_EXERCISE = "cpr"
+
+
+def load_dataset(data, exercise, T=16):
+    """Return ``(X, Y, compositions, groups)`` for either dataset."""
+    if exercise == CPR_EXERCISE:
+        X, Y, compositions, groups, _ = load_cpr(data, T=T)
+        return X, Y, compositions, groups
+    X, Y, compositions, groups, _ = load_exercise(data, exercise, T=T)
+    return X, Y, compositions, groups
+
+
+def criteria_of(exercise):
+    return CPR_ERRORS if exercise == CPR_EXERCISE else CRITERIA[exercise]
 
 
 def state_counts(Y: np.ndarray, idx: np.ndarray) -> np.ndarray:
@@ -216,7 +235,7 @@ def train_condition(X, Y, train, val, test, kind, seed, shared_pos_weight, epoch
 
 
 def run(exercise, target, seed, model, data, epochs=55, manifest=None):
-    X, Y, compositions, groups, _ = load_exercise(data, exercise, T=16)
+    X, Y, compositions, groups = load_dataset(data, exercise, T=16)
     if manifest:
         seen, unseen, val, test, audit = make_optimized_manifest_split(
             Y, compositions, groups, exercise, target, seed, manifest)
@@ -226,7 +245,7 @@ def run(exercise, target, seed, model, data, epochs=55, manifest=None):
         seen, unseen, val, test, audit = make_matched_split(Y, compositions, groups, target, seed)
     # Identical initialization seed isolates the training-set composition change.
     result = {"exercise": exercise, "target": target, "seed": seed, "model": model,
-              "criteria": CRITERIA[exercise], "split_audit": audit}
+              "criteria": criteria_of(exercise), "split_audit": audit}
     common_union = np.union1d(seen, unseen)
     pos = Y[common_union].sum(0); neg = len(common_union) - pos
     shared_pos_weight = np.clip(neg / np.maximum(pos, 1), .25, 8)
@@ -244,7 +263,7 @@ if __name__ == "__main__":
     ap.add_argument("--audit-only", action="store_true"); ap.add_argument("--out", required=True)
     a = ap.parse_args()
     if a.audit_only:
-        _, Y, compositions, groups, _ = load_exercise(a.data, a.exercise, T=16)
+        _, Y, compositions, groups = load_dataset(a.data, a.exercise, T=16)
         _, _, _, _, audit = make_optimized_manifest_split(
             Y, compositions, groups, a.exercise, a.target, a.seed, a.manifest)
         result = {"exercise": a.exercise, "target": a.target, "seed": a.seed, "split_audit": audit}
