@@ -120,12 +120,12 @@ shift. CPR-Coach is the closest direct composition formulation
 \cite{wang2024cpr}; its isolated-error training regime differs from our naturally
 multi-error training pool.
 
-Learnable Motion-Focused Tokenization drops low-motion RGB patches to reduce
-background-driven video domain shift \cite{liu2026lmft}; our pose input has no
-scene background, so this is an adjacent evidence-selection principle, not a
-matched baseline here.
+Motion-focused tokenization reduces background-driven video domain shift
+\cite{liu2026lmft}, an adjacent evidence-selection principle rather than a
+baseline for pose input with no background.
 
 \subsection{Multi-label shortcuts and unseen combinations}
+\label{sec:shortcuts}
 Multi-label models often exploit label dependence. Compositional multi-label
 classification explicitly holds out label combinations \cite{chai2024compositional},
 while counterfactual and correlation-shortcut work studies harmful co-occurrence
@@ -182,10 +182,9 @@ validation--test group intersections are zero in every fold.
 
 A target is eligible when it has at least ten repetitions, three source groups,
 and a feasible supported split. Seven squat and five deadlift diagnoses qualify.
-Two lunge diagnoses considered by the earlier protocol are infeasible: their
-minority pool holds exactly eight examples, so eight cannot remain in training
-while one also enters validation. They are excluded rather than evaluated under
-a weaker rule. The primary experiment is therefore 12 targets $\times$ three
+Two lunge candidates are infeasible under that rule---their minority pool
+holds exactly eight examples---and are excluded rather than evaluated under a
+weaker one. The primary experiment is therefore 12 targets $\times$ three
 seeds per model.
 
 Ordinary validation is a secondary comparator, not a pure seen-composition
@@ -209,15 +208,12 @@ with reduced but nonzero marginal differences. This test uses four generic tempo
 backbones and averages seeds, then models, within each diagnosis.
 
 \subsection{Models and training}
-We use six compact controlled models: a temporal CNN, BiGRU, Transformer,
-selective state-space model, ST-GCN, and Factorized Anatomical Criterion Tokens
-(FACT).
-All baselines receive a $16\times198$ sequence (two views $\times$ 33 joints
-$\times$ xyz). The TCN uses a 96-D frame embedding, temporal kernels 5 and 3,
-and mean/max pooling. BiGRU uses a 72-D bidirectional GRU; Transformer uses two
-96-D, four-head encoder layers; and SSM uses one 32-D bidirectional selective
-scan. Their deadlift models contain 112k, 99k, 190k, and 13k parameters,
-respectively. The SSM is a compact study implementation, not an official
+We use six compact controlled models, all receiving the same $16\times198$
+sequence (two views $\times$ 33 joints $\times$ xyz). The four matched
+backbones are a dilated TCN, a bidirectional
+GRU, a two-layer four-head Transformer encoder, and a bidirectional selective
+scan, with 112k, 99k, 190k and 13k deadlift parameters; layer dimensions are in
+the released code. The SSM is a compact study implementation, not an official
 reproduction. ST-GCN applies two spatial graph/temporal
 convolution blocks to each MediaPipe view using the physical skeleton edges,
 then fuses pooled view features (35k deadlift parameters).
@@ -234,10 +230,10 @@ Every model receives the same representation and split, with class-weighted
 binary cross-entropy, AdamW, fixed 0.5 thresholds, and early stopping on
 validation macro-F1. Hyperparameters are never selected using
 the held-out target. We report target-equal means: seeds are averaged within
-target, then all 12 targets receive equal weight. All primary trainers call the
-same deterministic constrained splitter. The released manifest records raw-file
-hashes, preprocessing version, exact indices, target support, exclusions, and
-zero group intersections for every target and seed.
+target, then all 12 targets receive equal weight. The full-target and matched
+experiments use separate deterministic split constructions; each released
+manifest records raw-file hashes, preprocessing version, exact indices, target
+support, exclusions, and zero group intersections for every target and seed.
 
 \section{Label-Space Diagnostic}
 For criterion $c$, let $\mathbf y^*_{-c}$ denote the other criterion bits. Label-
@@ -265,7 +261,9 @@ diagnosis, and take the raw diagnosis-equal mean across 67 target--criterion uni
 A 50,000-shuffle test permutes a predictor only among criteria of the same
 diagnosis. A partial rank test residualizes LOP and accuracy against $G_c$ and
 target-bit state before applying the same blocked permutation. We report
-100,000-sample target bootstrap intervals and two-sided probabilities. Exact
+100,000-sample target bootstrap intervals and two-sided probabilities. At 12 targets
+the exact two-sided Wilcoxon minimum is $2/2^{12}=.00049$; a $p$ at that value
+means all targets moved alike and cannot fall further. Exact
 match was fixed before both corrected reruns; the exchange optimization was
 specified before examining its model outcomes.
 
@@ -348,10 +346,11 @@ optimization could not remove. Color marks exercise.}
 \end{figure}
 
 The secondary full-target stress test still measures a harder distributional
-setting. Table \ref{tab:models} shows that FACT has the largest mean bit accuracy and exact
-match, but its advantage over TCN is unresolved: $+1.85$ bit points ($p=.204$)
-and $+2.75$ exact points ($p=.086$) in two-sided exploratory comparisons. We
-therefore make no architecture-superiority claim. Micro-F1 is pooled across
+setting. In Table \ref{tab:models} FACT leads every validation column and LOCO
+exact match, while ST-GCN leads LOCO bit accuracy and micro-F1. FACT's LOCO
+advantage over TCN is unresolved: $+1.85$ bit points ($p=.204$) and $+2.75$
+exact points ($p=.086$) in two-sided exploratory comparisons. We therefore make
+no architecture-superiority claim. Micro-F1 is pooled across
 criterion decisions; macro-F1 is omitted because every criterion has one
 constant state inside a target fold, making it meaningless here. ``Bit'' is the
 fraction of all criterion decisions that are correct; ``Exact'' requires every
@@ -375,8 +374,8 @@ TCN & 65.08 & 56.35 & 12.61 & 63.04 & 44.86 & 2.39\\
 BiGRU & 65.32 & 57.00 & 14.71 & 60.61 & 42.11 & 2.63\\
 Transformer & 64.26 & 57.08 & 12.20 & 59.83 & 41.79 & 2.07\\
 Selective SSM & 66.89 & 56.91 & 14.23 & 62.50 & 41.82 & 3.41\\
-ST-GCN & 64.61 & 56.08 & 10.86 & 65.87 & 49.82 & 2.85\\
-FACT & \textbf{72.39} & \textbf{63.95} & \textbf{18.56} & \textbf{64.89} & 44.77 & \textbf{5.14}\\
+ST-GCN & 64.61 & 56.08 & 10.86 & \textbf{65.87} & \textbf{49.82} & 2.85\\
+FACT & \textbf{72.39} & \textbf{63.95} & \textbf{18.56} & 64.89 & 44.77 & \textbf{5.14}\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -405,7 +404,7 @@ itself a remedy.
 
 The control analysis also changes the mechanism claim. LOP reliably describes
 which bit fails, but it is largely a proxy for target-relative criterion-state
-imbalance (Sec.~II-B). The practical takeaway is therefore not a
+imbalance (Sec.~\ref{sec:shortcuts}). The practical takeaway is therefore not a
 label-neighborhood mechanism but that this ordinary quantity, on its own,
 predicts held-out failure well enough to serve as a deployment-time check
 requiring no training run.
@@ -413,8 +412,9 @@ requiring no training run.
 \section{Limitations}
 The study has one multi-label composition dataset and only 12 eligible
 diagnosis units. The split key identifies paired recordings, not verified
-participants. The matched test uses three test groups per diagnosis and
-exchanges examples rather than preserving identical marginals; optimization
+participants. The matched test uses three test groups per diagnosis holding 1--5 repetitions
+(median 5), making per-fold exact match coarse, and exchanges examples rather
+than preserving identical marginals; optimization
 roughly halves the mean worst-criterion difference, but residual imbalance
 prevents a causal interpretation. Manual criterion--anatomy mappings affect
 FACT, which is why it is only a comparator. Thresholds are fixed at 0.5, with
@@ -436,7 +436,7 @@ and confirmation that this known imbalance signal, not label-neighborhood
 structure, is what predicts failure here---a training-free check worth running
 before a model is trained.
 
-\enlargethispage{3\baselineskip}
+\enlargethispage{4\baselineskip}
 \begin{thebibliography}{99}
 \footnotesize
 \bibitem{wang2024cpr} J. Wang \emph{et al.}, ``CPR-Coach: Recognizing composite
