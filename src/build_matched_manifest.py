@@ -3,8 +3,8 @@ import argparse
 import json
 from pathlib import Path
 
-from alexgym_data import load_exercise
-from matched_composition import make_matched_split, make_optimized_manifest_split
+from matched_composition import (load_dataset, make_matched_split,
+                                 make_optimized_manifest_split)
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     for exercise, targets in protocol["default_targets"].items():
         if not targets:
             continue
-        _, Y, compositions, groups, _ = load_exercise(args.data, exercise, T=16)
+        _, Y, compositions, groups = load_dataset(args.data, exercise, T=16)
         payload["splits"][exercise] = {}
         for target in targets:
             payload["splits"][exercise][target] = {}
