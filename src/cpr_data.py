@@ -10,16 +10,21 @@ This module mirrors ``alexgym_data.load_exercise`` closely enough that
 against it unchanged: both return a float32 ``X``, a binary criterion matrix
 ``Y``, per-repetition composition strings, and recording-group identifiers.
 
-Three facts about the release drive the implementation:
+Four facts about the release drive the implementation:
 
 * Each take is recorded on four synchronised channels (``ch0``-``ch3``).  They
   are one repetition, not four, so the channels are concatenated into a single
   feature vector exactly as ALEX-GYM-1 concatenates its frontal and lateral
   views.  Treating them as separate rows would put the same performance in
   train and test.
-* Keypoints are 2D COCO-17 from AlphaPose, not 3D MediaPipe-33.  The
-  normalisation below is the same pelvis-centre/body-scale recipe as
-  ALEX-GYM-1 with COCO joint indices substituted.
+* Poses are AlphaPose **Halpe-136 truncated to 68 joints**: 26 body joints
+  followed by 42 hand joints.  The hand joints are not usable -- measured mean
+  confidence is 0.057 against 0.606 for the body -- so only the 26 body joints
+  are kept.  They would otherwise be 62% of the input width and carry noise.
+  The first 17 body joints follow the COCO ordering, so the normalisation is
+  the same pelvis-centre/body-scale recipe ALEX-GYM-1 uses.
+* ``label`` is a bare int in the single-error files and a list in the
+  composite files.  Both spellings mean the same thing and are normalised.
 * Class folders are composition-pure, so the recording group can be the folder
   (``CPR_Double_Dataset_S0/DC00_S0``).  Every eligible composition has exactly
   three such folders, which is what the protocol's three-seed, distinct
@@ -33,7 +38,7 @@ from pathlib import Path
 
 import numpy as np
 
-PREPROCESS_VERSION = "cpr-coach-v1-coco17-4ch"
+PREPROCESS_VERSION = "cpr-coach-v1-halpe26-4ch"
 
 # Label 0 is the correct action; 1..13 are the error criteria, in ActionList order.
 CPR_ERRORS = [
@@ -44,25 +49,56 @@ CPR_ERRORS = [
 ]
 NCRIT = len(CPR_ERRORS)
 
-# COCO-17 indices used for normalisation.
+# Halpe body joints; the trailing 42 hand joints are discarded (see module docstring).
+N_BODY_JOINTS = 26
+# Indices 0..16 follow COCO, so these mean the same thing as in alexgym_data.
 L_SHOULDER, R_SHOULDER, L_HIP, R_HIP = 5, 6, 11, 12
+
+# The composite pickles carry the multi-error takes; the train/test pickles carry
+# the single-error and correct takes.  double_errors_keypoints.pkl is a subset of
+# all_errors_keypoints.pkl and is deliberately not read.
+DEFAULT_KEYPOINT_FILES = (
+    "Keypoints/all_errors_keypoints.pkl",
+    "Keypoints/train_keypoints.pkl",
+    "Keypoints/test_keypoints.pkl",
+)
 
 # Some frame_dir values carry a _BIG suffix that the annotation lists omit.
 _SUFFIX = re.compile(r"_BIG$")
 
 
 def _parse_frame_dir(frame_dir: str):
-    """``dataset/class/r##/ch#`` -> (group, repetition_key, channel).
+    """``[dataset/]class/r##/ch#`` -> (group, repetition_key, channel).
 
-    The dataset segment is normalised so keypoint entries join against the
-    annotation lists, which spell the same folder without ``_BIG``.
+    The release uses two layouts: the main recordings spell
+    ``dataset/class/r##/ch#``, while the supplementary ``Sup*`` folders omit
+    the dataset segment.  Both identify a composition-pure class folder, which
+    is the recording group.  The dataset segment is also stripped of the
+    ``_BIG`` suffix some paths carry, so one session does not fork into two
+    groups and break train/test group-disjointness.
     """
     parts = frame_dir.strip("/").split("/")
-    if len(parts) != 4:
+    if len(parts) == 4:
+        dataset, cls, rep, channel = parts
+        group = f"{_SUFFIX.sub('', dataset)}/{cls}"
+    elif len(parts) == 3:
+        cls, rep, channel = parts
+        group = _SUFFIX.sub("", cls)
+    else:
         raise ValueError(f"unexpected frame_dir layout: {frame_dir!r}")
-    dataset, cls, rep, channel = parts
-    dataset = _SUFFIX.sub("", dataset)
-    return f"{dataset}/{cls}", f"{dataset}/{cls}/{rep}", channel
+    return group, f"{group}/{rep}", channel
+
+
+def labels_of(record) -> frozenset:
+    """Error labels of a record, as a set, dropping the 'correct' label 0.
+
+    The single-error files store ``label`` as an int and the composite files
+    store a list.  Iterating the int spelling would raise; indexing the list
+    spelling would silently keep only the first error.
+    """
+    raw = record["label"]
+    values = [raw] if np.isscalar(raw) else list(raw)
+    return frozenset(int(v) for v in values if int(v) > 0)
 
 
 def resample(x, T=16):
@@ -83,8 +119,9 @@ def fill_missing_frames(seq):
 
     AlphaPose writes all-zero coordinates for a failed detection, the same
     convention ALEX-GYM-1 uses, so the same whole-frame interpolation applies.
-    Partially missing joints are left alone: the release carries no confidence
-    channel that would distinguish a true zero from a dropped joint.
+    Partially missing joints are left alone: the release carries a confidence
+    channel, but ALEX-GYM-1 does not, and imputing here would make the two
+    datasets incomparable on the one axis the paper is testing.
     """
     x = np.asarray(seq, dtype=np.float32).copy()
     valid = np.abs(x).sum(axis=(1, 2)) > 1e-8
@@ -100,7 +137,7 @@ def fill_missing_frames(seq):
 
 
 def normalize_pose(x):
-    """Pelvis-centre and divide by a robust body scale (COCO-17 joints)."""
+    """Pelvis-centre and divide by a robust body scale (COCO-compatible joints)."""
     pelvis = (x[:, L_HIP, :] + x[:, R_HIP, :]) / 2
     x = x - pelvis[:, None, :]
     shoulder = np.linalg.norm(x[:, L_SHOULDER] - x[:, R_SHOULDER], axis=-1)
@@ -110,10 +147,10 @@ def normalize_pose(x):
     return x / max(scale, 1e-3)
 
 
-def load_cpr(root, T=16, keypoints_file="Keypoints/all_errors_keypoints.pkl"):
+def load_cpr(root, T=16, keypoint_files=DEFAULT_KEYPOINT_FILES):
     """Return ``(X, Y, compositions, groups, meta)`` for every repetition.
 
-    ``X`` is ``(N, T, n_channels * 17 * 2)``, ``Y`` is ``(N, 13)`` binary error
+    ``X`` is ``(N, T, n_channels * 26 * 2)``, ``Y`` is ``(N, 13)`` binary error
     bits, ``compositions`` are the bit strings the split logic keys on, and
     ``groups`` are composition-pure folder identifiers.
     """
@@ -124,36 +161,53 @@ def load_cpr(root, T=16, keypoints_file="Keypoints/all_errors_keypoints.pkl"):
         if str(z["preprocess_version"].item()) == PREPROCESS_VERSION:
             return (z["X"], z["Y"], z["co"], z["g"], z["meta"].item())
 
-    with open(root / keypoints_file, "rb") as fh:
-        records = pickle.load(fh)
-
-    # Gather the channels of each take, and the labels they agree on.
     takes: dict[str, dict] = {}
-    for rec in records:
-        group, key, channel = _parse_frame_dir(rec["frame_dir"])
-        labels = frozenset(int(v) for v in rec["label"] if int(v) > 0)
-        take = takes.setdefault(key, {"group": group, "labels": labels, "channels": {}})
-        if take["labels"] != labels:
-            raise ValueError(f"{key}: channels disagree on labels "
-                             f"({sorted(take['labels'])} vs {sorted(labels)})")
-        take["channels"][channel] = np.asarray(rec["keypoint"], dtype=np.float32)
-
-    channel_names = sorted({c for t in takes.values() for c in t["channels"]})
-    X, Y, compositions, groups, keys, dropped = [], [], [], [], [], []
-    for key in sorted(takes):
-        take = takes[key]
-        if set(take["channels"]) != set(channel_names):
-            dropped.append({"take": key, "channels": sorted(take["channels"])})
-            continue
-        views = []
-        incomplete = False
-        for channel in channel_names:
-            seq = take["channels"][channel]
+    confidence = {"body": [], "hand": []}
+    empty_channels: list[dict] = []
+    for name in keypoint_files:
+        with open(root / name, "rb") as fh:
+            records = pickle.load(fh)
+        for rec in records:
+            group, key, channel = _parse_frame_dir(rec["frame_dir"])
+            labels = labels_of(rec)
+            take = takes.setdefault(key, {"group": group, "labels": labels, "channels": {}})
+            if take["labels"] != labels:
+                raise ValueError(f"{key}: channels disagree on labels "
+                                 f"({sorted(take['labels'])} vs {sorted(labels)})")
+            seq = np.asarray(rec["keypoint"], dtype=np.float32)
             # AlphaPose arrays are (persons, frames, joints, coords); this
             # release is single-person, so the first track is the performer.
             if seq.ndim == 4:
                 seq = seq[0]
-            seq, valid = fill_missing_frames(seq)
+            # Two takes in the release have a channel the detector failed on
+            # entirely, stored as zero frames rather than zero coordinates.
+            # Record it and leave the channel absent, which drops the take
+            # below -- the same treatment ALEX-GYM-1 gives its one repetition
+            # with no valid frontal view.
+            if seq.ndim != 3 or seq.shape[0] == 0:
+                empty_channels.append({"take": key, "channel": channel,
+                                       "shape": list(np.shape(rec["keypoint"]))})
+                continue
+            if (score := rec.get("keypoint_score")) is not None:
+                score = np.asarray(score)
+                score = score[0] if score.ndim == 3 else score
+                if score.size:
+                    confidence["body"].append(float(score[:, :N_BODY_JOINTS].mean()))
+                    if score.shape[1] > N_BODY_JOINTS:
+                        confidence["hand"].append(float(score[:, N_BODY_JOINTS:].mean()))
+            take["channels"][channel] = seq[:, :N_BODY_JOINTS, :]
+
+    channel_names = sorted({c for t in takes.values() for c in t["channels"]})
+    X, Y, groups, keys, dropped = [], [], [], [], []
+    for key in sorted(takes):
+        take = takes[key]
+        if set(take["channels"]) != set(channel_names):
+            dropped.append({"take": key, "reason": "missing channel",
+                            "channels": sorted(take["channels"])})
+            continue
+        views, incomplete = [], False
+        for channel in channel_names:
+            seq, valid = fill_missing_frames(take["channels"][channel])
             if not valid.any():
                 incomplete = True
                 break
@@ -172,7 +226,10 @@ def load_cpr(root, T=16, keypoints_file="Keypoints/all_errors_keypoints.pkl"):
     groups = np.asarray(groups)
     meta = {"preprocess_version": PREPROCESS_VERSION, "criteria": CPR_ERRORS,
             "channels": channel_names, "n_takes": len(keys), "dropped": dropped,
-            "keys": keys}
+            "empty_channels": empty_channels,
+            "body_joints": N_BODY_JOINTS, "keys": keys,
+            "mean_confidence": {k: (float(np.mean(v)) if v else None)
+                                for k, v in confidence.items()}}
 
     np.savez_compressed(cache, X=X, Y=Y, co=compositions, g=groups,
                         preprocess_version=PREPROCESS_VERSION,
@@ -188,4 +245,5 @@ if __name__ == "__main__":
     a = ap.parse_args()
     X, Y, co, g, meta = load_cpr(a.data, T=a.frames)
     print(f"X={X.shape}  Y={Y.shape}  compositions={len(set(co))}  groups={len(set(g))}")
-    print(f"channels={meta['channels']}  dropped={len(meta['dropped'])}")
+    print(f"channels={meta['channels']}  dropped={len(meta['dropped'])}  "
+          f"confidence={meta['mean_confidence']}")

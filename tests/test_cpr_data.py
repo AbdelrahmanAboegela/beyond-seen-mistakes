@@ -9,8 +9,8 @@ picture scale. Each failure would corrupt the split rather than raise.
 import numpy as np
 import pytest
 
-from cpr_data import (NCRIT, _parse_frame_dir, fill_missing_frames,
-                      normalize_pose, resample)
+from cpr_data import (NCRIT, N_BODY_JOINTS, _parse_frame_dir, fill_missing_frames,
+                      labels_of, normalize_pose, resample)
 
 
 def test_frame_dir_parses_into_group_take_and_channel():
@@ -32,9 +32,10 @@ def test_big_suffix_does_not_split_one_folder_into_two_groups():
     assert plain[1] == big[1]
 
 
-def test_malformed_frame_dir_raises():
+def test_an_over_long_frame_dir_raises():
+    """Three and four segments are both real layouts; five is not."""
     with pytest.raises(ValueError):
-        _parse_frame_dir("CPR_Dataset_S0/C00_S0/r00")
+        _parse_frame_dir("extra/CPR_Dataset_S0/C00_S0/r00/ch0")
 
 
 def test_resample_hits_the_requested_length_and_preserves_endpoints():
@@ -90,3 +91,40 @@ def test_normalisation_survives_a_degenerate_pose():
 
 def test_criterion_count_matches_the_released_action_list():
     assert NCRIT == 13
+
+
+def test_label_reads_both_spellings_in_the_release():
+    """Single-error files store a bare int; composite files store a list.
+
+    Iterating the int spelling raises; indexing the list spelling would keep
+    only the first error and silently turn a double into a single.
+    """
+    assert labels_of({"label": 4}) == {4}
+    assert labels_of({"label": [1, 4]}) == {1, 4}
+    assert labels_of({"label": 0}) == set()          # 0 is the correct action
+    assert labels_of({"label": [0]}) == set()
+    import numpy as np
+    assert labels_of({"label": np.int64(7)}) == {7}
+
+
+def test_only_the_body_joints_are_kept():
+    """Hand joints measure 0.057 mean confidence and are dropped."""
+    assert N_BODY_JOINTS == 26
+
+
+def test_normalisation_indices_sit_inside_the_kept_joints():
+    from cpr_data import L_SHOULDER, R_SHOULDER, L_HIP, R_HIP
+    assert max(L_SHOULDER, R_SHOULDER, L_HIP, R_HIP) < N_BODY_JOINTS
+
+
+def test_supplementary_folders_use_a_three_segment_path():
+    """Sup* recordings omit the dataset segment; 1,064 of 5,664 records do this."""
+    group, key, channel = _parse_frame_dir("SupDC00/r00/ch0")
+    assert group == "SupDC00"
+    assert key == "SupDC00/r00"
+    assert channel == "ch0"
+
+
+def test_a_two_segment_path_is_still_rejected():
+    with pytest.raises(ValueError):
+        _parse_frame_dir("SupDC00/r00")
