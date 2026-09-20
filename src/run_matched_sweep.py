@@ -20,6 +20,8 @@ def run_one(task, args):
         command.extend(["--manifest", args.manifest])
     if args.with_rate:
         command.append("--with-rate")
+    if args.map_control != "anatomy":
+        command.extend(["--map-control", args.map_control])
     env = os.environ.copy(); env["PYTHONPATH"] = "src"
     completed = subprocess.run(command, env=env, capture_output=True, text=True, timeout=args.timeout)
     if completed.returncode:
@@ -35,6 +37,7 @@ def main():
     ap.add_argument("--models", default="tcn"); ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--epochs", type=int, default=55); ap.add_argument("--timeout", type=int, default=240)
     ap.add_argument("--with-rate", action="store_true")
+    ap.add_argument("--map-control", default="anatomy", choices=["anatomy", "random", "permuted"])
     args = ap.parse_args(); (Path(args.outdir) / "runs").mkdir(parents=True, exist_ok=True)
     protocol = json.loads(Path(args.protocol).read_text()); tasks = []
     for model in args.models.split(","):
