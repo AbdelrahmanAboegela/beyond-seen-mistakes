@@ -1,0 +1,376 @@
+{
+  "exercise": "cpr",
+  "target": "1000000100000",
+  "seed": 42,
+  "model": "transformer",
+  "criteria": [
+    "Overlap Hands",
+    "Clenching Hands",
+    "Single Hand",
+    "Bending Arms",
+    "Tilting Arms",
+    "Jump Pressing",
+    "Squatting",
+    "Standing",
+    "Wrong Position",
+    "Insufficient Pressing",
+    "Slow Frequency",
+    "Excessive Pressing",
+    "Random Position Pressing"
+  ],
+  "with_rate": true,
+  "map_control": "anatomy",
+  "split_audit": {
+    "target": "1000000100000",
+    "seed": 42,
+    "test_group": "CPR_Double_Dataset_S1/DC04_S1",
+    "remaining_target_groups": [
+      "CPR_Double_Dataset_S0/DC04_S0",
+      "SupDC04"
+    ],
+    "split_offset": 412,
+    "n_train_each": 1062,
+    "n_target_rows_added": 7,
+    "n_non_target_rows_exchanged": 7,
+    "n_val": 340,
+    "n_test": 5,
+    "seen_train_state_counts": [
+      [
+        880,
+        182
+      ],
+      [
+        973,
+        89
+      ],
+      [
+        994,
+        68
+      ],
+      [
+        885,
+        177
+      ],
+      [
+        914,
+        148
+      ],
+      [
+        896,
+        166
+      ],
+      [
+        917,
+        145
+      ],
+      [
+        903,
+        159
+      ],
+      [
+        886,
+        176
+      ],
+      [
+        856,
+        206
+      ],
+      [
+        954,
+        108
+      ],
+      [
+        981,
+        81
+      ],
+      [
+        962,
+        100
+      ]
+    ],
+    "unseen_train_state_counts": [
+      [
+        882,
+        180
+      ],
+      [
+        973,
+        89
+      ],
+      [
+        994,
+        68
+      ],
+      [
+        885,
+        177
+      ],
+      [
+        914,
+        148
+      ],
+      [
+        896,
+        166
+      ],
+      [
+        917,
+        145
+      ],
+      [
+        904,
+        158
+      ],
+      [
+        886,
+        176
+      ],
+      [
+        854,
+        208
+      ],
+      [
+        954,
+        108
+      ],
+      [
+        979,
+        83
+      ],
+      [
+        962,
+        100
+      ]
+    ],
+    "val_state_counts": [
+      [
+        282,
+        58
+      ],
+      [
+        303,
+        37
+      ],
+      [
+        283,
+        57
+      ],
+      [
+        312,
+        28
+      ],
+      [
+        302,
+        38
+      ],
+      [
+        296,
+        44
+      ],
+      [
+        303,
+        37
+      ],
+      [
+        312,
+        28
+      ],
+      [
+        306,
+        34
+      ],
+      [
+        308,
+        32
+      ],
+      [
+        286,
+        54
+      ],
+      [
+        301,
+        39
+      ],
+      [
+        298,
+        42
+      ]
+    ],
+    "group_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    },
+    "source_manifest": "configs\\cpr_matched_manifest_v3_optimized.json",
+    "replacement_strategy": "optimized_minimax_then_l1",
+    "random_v2_positive_count_difference": [
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      2,
+      0,
+      2,
+      0
+    ],
+    "random_v2_max_positive_count_difference": 2,
+    "random_v2_l1_positive_count_difference": 7,
+    "optimized_positive_count_difference": [
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      2,
+      0,
+      2,
+      0
+    ],
+    "optimized_max_positive_count_difference": 2,
+    "optimized_l1_positive_count_difference": 7,
+    "optimization": {
+      "solver": "scipy.optimize.milp (HiGHS)",
+      "objective": "lexicographic min(max criterion difference, total difference)",
+      "success": true,
+      "status": 0,
+      "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+      "positive_count_difference": [
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        2,
+        0,
+        2,
+        0
+      ],
+      "max_positive_count_difference": 2,
+      "l1_positive_count_difference": 7,
+      "exact_balance_feasible": false,
+      "exact_balance_reason": "Every eligible non-target row differs from the target in at least one bit."
+    }
+  },
+  "shared_pos_weight": [
+    4.716577529907227,
+    8.0,
+    8.0,
+    5.039547920227051,
+    6.222972869873047,
+    5.439759254455566,
+    6.372413635253906,
+    5.478787899017334,
+    5.073863506317139,
+    4.13942289352417,
+    8.0,
+    8.0,
+    8.0
+  ],
+  "seen": {
+    "val": {
+      "macro_f1": 0.7486404191539683,
+      "micro_f1": 0.7371375116931712,
+      "bit_accuracy": 0.9364253393665158,
+      "exact_match": 0.4117647058823529,
+      "per_criterion_accuracy": [
+        0.8470588235294118,
+        0.8676470588235294,
+        0.9647058823529412,
+        0.9764705882352941,
+        0.9970588235294118,
+        0.8558823529411764,
+        1.0,
+        1.0,
+        0.9176470588235294,
+        0.9911764705882353,
+        1.0,
+        0.8676470588235294,
+        0.888235294117647
+      ]
+    },
+    "test": {
+      "macro_f1": 0.07692307692307693,
+      "micro_f1": 0.5,
+      "bit_accuracy": 0.8461538461538461,
+      "exact_match": 0.0,
+      "per_criterion_accuracy": [
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ]
+    },
+    "epochs": 55,
+    "train_seconds": 44.68474817276001,
+    "n_params": 192741
+  },
+  "unseen": {
+    "val": {
+      "macro_f1": 0.7701409340701537,
+      "micro_f1": 0.7595419847328244,
+      "bit_accuracy": 0.9429864253393665,
+      "exact_match": 0.4676470588235294,
+      "per_criterion_accuracy": [
+        0.861764705882353,
+        0.9323529411764706,
+        0.9823529411764705,
+        0.9764705882352941,
+        0.9823529411764705,
+        0.8470588235294118,
+        1.0,
+        1.0,
+        0.9235294117647059,
+        0.9882352941176471,
+        1.0,
+        0.8764705882352941,
+        0.888235294117647
+      ]
+    },
+    "test": {
+      "macro_f1": 0.07692307692307693,
+      "micro_f1": 0.5,
+      "bit_accuracy": 0.8461538461538461,
+      "exact_match": 0.0,
+      "per_criterion_accuracy": [
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.8,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.2,
+        1.0
+      ]
+    },
+    "epochs": 55,
+    "train_seconds": 48.026531457901,
+    "n_params": 192741
+  }
+}

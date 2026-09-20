@@ -39,9 +39,7 @@ def load_dataset(data, exercise, T=16, with_rate=False):
     if exercise == CPR_EXERCISE:
         X, Y, compositions, groups, _ = load_cpr(data, T=T, with_rate=with_rate)
         return X, Y, compositions, groups
-    if with_rate:
-        raise NotImplementedError("rate features are wired for CPR-Coach only so far")
-    X, Y, compositions, groups, _ = load_exercise(data, exercise, T=T)
+    X, Y, compositions, groups, _ = load_exercise(data, exercise, T=T, with_rate=with_rate)
     return X, Y, compositions, groups
 
 
