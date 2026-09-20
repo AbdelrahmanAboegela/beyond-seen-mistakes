@@ -1,0 +1,314 @@
+[
+  {
+    "model": "gru",
+    "metric": "bit_accuracy",
+    "n_targets": 72,
+    "seen_mean": 0.8726139601139601,
+    "unseen_mean": 0.8352564102564102,
+    "seen_minus_unseen": 0.03735754985754986,
+    "bootstrap95": [
+      0.029113247863247878,
+      0.04558404558404557
+    ],
+    "wilcoxon_two_sided": 2.11293524214296e-10
+  },
+  {
+    "model": "gru",
+    "metric": "exact_match",
+    "n_targets": 72,
+    "seen_mean": 0.16736111111111113,
+    "unseen_mean": 0.04560185185185185,
+    "seen_minus_unseen": 0.12175925925925925,
+    "bootstrap95": [
+      0.08680555555555554,
+      0.15833333333333333
+    ],
+    "wilcoxon_two_sided": 1.2837380419419471e-08
+  },
+  {
+    "model": "gru",
+    "metric": "macro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.09851296623655753,
+    "unseen_mean": 0.0780659306543826,
+    "seen_minus_unseen": 0.02044703558217494,
+    "bootstrap95": [
+      0.01654908482678261,
+      0.024332846816346794
+    ],
+    "wilcoxon_two_sided": 1.2959664649516964e-11
+  },
+  {
+    "model": "gru",
+    "metric": "micro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.5851832253229703,
+    "unseen_mean": 0.46729474374821517,
+    "seen_minus_unseen": 0.11788848157475523,
+    "bootstrap95": [
+      0.09665235425197787,
+      0.1391213022736613
+    ],
+    "wilcoxon_two_sided": 9.966587464185706e-12
+  },
+  {
+    "model": "ssm",
+    "metric": "bit_accuracy",
+    "n_targets": 72,
+    "seen_mean": 0.8634793447293447,
+    "unseen_mean": 0.8290954415954416,
+    "seen_minus_unseen": 0.03438390313390313,
+    "bootstrap95": [
+      0.02548076923076921,
+      0.04337606837606837
+    ],
+    "wilcoxon_two_sided": 2.4772047956324553e-09
+  },
+  {
+    "model": "ssm",
+    "metric": "exact_match",
+    "n_targets": 72,
+    "seen_mean": 0.16157407407407406,
+    "unseen_mean": 0.05486111111111111,
+    "seen_minus_unseen": 0.10671296296296295,
+    "bootstrap95": [
+      0.07083333333333335,
+      0.14583333333333331
+    ],
+    "wilcoxon_two_sided": 9.710628048618212e-08
+  },
+  {
+    "model": "ssm",
+    "metric": "macro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.10130257673366438,
+    "unseen_mean": 0.0794683653204729,
+    "seen_minus_unseen": 0.021834211413191494,
+    "bootstrap95": [
+      0.017543903798558528,
+      0.02611381896377256
+    ],
+    "wilcoxon_two_sided": 2.980420389846921e-11
+  },
+  {
+    "model": "ssm",
+    "metric": "micro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.5847932161007194,
+    "unseen_mean": 0.4646652402716638,
+    "seen_minus_unseen": 0.12012797582905572,
+    "bootstrap95": [
+      0.09617708900642626,
+      0.1445406533317235
+    ],
+    "wilcoxon_two_sided": 2.079038281977449e-11
+  },
+  {
+    "model": "stgcn",
+    "metric": "bit_accuracy",
+    "n_targets": 72,
+    "seen_mean": 0.7229700854700855,
+    "unseen_mean": 0.7054309116809117,
+    "seen_minus_unseen": 0.017539173789173777,
+    "bootstrap95": [
+      0.005822649572649554,
+      0.029291310541310525
+    ],
+    "wilcoxon_two_sided": 0.010078227838327593
+  },
+  {
+    "model": "stgcn",
+    "metric": "exact_match",
+    "n_targets": 72,
+    "seen_mean": 0.02222222222222222,
+    "unseen_mean": 0.003472222222222222,
+    "seen_minus_unseen": 0.01875,
+    "bootstrap95": [
+      0.00023148148148148144,
+      0.042129629629629635
+    ],
+    "wilcoxon_two_sided": 0.39133754433251156
+  },
+  {
+    "model": "stgcn",
+    "metric": "macro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.06699702680753702,
+    "unseen_mean": 0.05999977388866278,
+    "seen_minus_unseen": 0.006997252918874254,
+    "bootstrap95": [
+      0.0030862728692095656,
+      0.011047093472839307
+    ],
+    "wilcoxon_two_sided": 0.0026317687675567803
+  },
+  {
+    "model": "stgcn",
+    "metric": "micro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.32340748111201645,
+    "unseen_mean": 0.27970518959071156,
+    "seen_minus_unseen": 0.043702291521304885,
+    "bootstrap95": [
+      0.021934629193810926,
+      0.06659690683461614
+    ],
+    "wilcoxon_two_sided": 0.0006712481459934136
+  },
+  {
+    "model": "tcn",
+    "metric": "bit_accuracy",
+    "n_targets": 72,
+    "seen_mean": 0.8507834757834758,
+    "unseen_mean": 0.8060007122507122,
+    "seen_minus_unseen": 0.04478276353276353,
+    "bootstrap95": [
+      0.03386752136752136,
+      0.05535968660968659
+    ],
+    "wilcoxon_two_sided": 1.7274349181773604e-09
+  },
+  {
+    "model": "tcn",
+    "metric": "exact_match",
+    "n_targets": 72,
+    "seen_mean": 0.14305555555555557,
+    "unseen_mean": 0.02523148148148148,
+    "seen_minus_unseen": 0.11782407407407408,
+    "bootstrap95": [
+      0.07430555555555556,
+      0.16597222222222222
+    ],
+    "wilcoxon_two_sided": 1.2428071083906306e-07
+  },
+  {
+    "model": "tcn",
+    "metric": "macro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.09665369451694238,
+    "unseen_mean": 0.07387296817867599,
+    "seen_minus_unseen": 0.022780726338266402,
+    "bootstrap95": [
+      0.018275607858747482,
+      0.02741360222074056
+    ],
+    "wilcoxon_two_sided": 1.593635302335137e-11
+  },
+  {
+    "model": "tcn",
+    "metric": "micro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.5516396585481724,
+    "unseen_mean": 0.4169344234658498,
+    "seen_minus_unseen": 0.13470523508232266,
+    "bootstrap95": [
+      0.10829842093928503,
+      0.16124762439729032
+    ],
+    "wilcoxon_two_sided": 2.0006773779496066e-11
+  },
+  {
+    "model": "transformer",
+    "metric": "bit_accuracy",
+    "n_targets": 72,
+    "seen_mean": 0.8639245014245015,
+    "unseen_mean": 0.8245014245014245,
+    "seen_minus_unseen": 0.03942307692307693,
+    "bootstrap95": [
+      0.029326923076923084,
+      0.04975071225071226
+    ],
+    "wilcoxon_two_sided": 3.993207323924039e-09
+  },
+  {
+    "model": "transformer",
+    "metric": "exact_match",
+    "n_targets": 72,
+    "seen_mean": 0.15671296296296297,
+    "unseen_mean": 0.031018518518518518,
+    "seen_minus_unseen": 0.12569444444444444,
+    "bootstrap95": [
+      0.09143518518518517,
+      0.16296296296296298
+    ],
+    "wilcoxon_two_sided": 4.361168762108035e-10
+  },
+  {
+    "model": "transformer",
+    "metric": "macro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.09884930139122071,
+    "unseen_mean": 0.07814822355212675,
+    "seen_minus_unseen": 0.02070107783909396,
+    "bootstrap95": [
+      0.015796864328550538,
+      0.025658036661207428
+    ],
+    "wilcoxon_two_sided": 1.0330479723215741e-09
+  },
+  {
+    "model": "transformer",
+    "metric": "micro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.5743697716765281,
+    "unseen_mean": 0.4471583432721121,
+    "seen_minus_unseen": 0.12721142840441607,
+    "bootstrap95": [
+      0.101780396488719,
+      0.1529725438876895
+    ],
+    "wilcoxon_two_sided": 1.852533164545288e-11
+  },
+  {
+    "model": "model_mean",
+    "metric": "bit_accuracy",
+    "n_targets": 72,
+    "seen_mean": 0.8347542735042734,
+    "unseen_mean": 0.8000569800569801,
+    "seen_minus_unseen": 0.034697293447293436,
+    "bootstrap95": [
+      0.02925560897435895,
+      0.0403668091168091
+    ],
+    "wilcoxon_two_sided": 4.514386045717386e-13
+  },
+  {
+    "model": "model_mean",
+    "metric": "exact_match",
+    "n_targets": 72,
+    "seen_mean": 0.1301851851851852,
+    "unseen_mean": 0.03203703703703704,
+    "seen_minus_unseen": 0.09814814814814815,
+    "bootstrap95": [
+      0.07476851851851853,
+      0.12291666666666666
+    ],
+    "wilcoxon_two_sided": 1.4170754949750346e-12
+  },
+  {
+    "model": "model_mean",
+    "metric": "macro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.09246311313718442,
+    "unseen_mean": 0.0739110523188642,
+    "seen_minus_unseen": 0.018552060818320212,
+    "bootstrap95": [
+      0.01567921048376225,
+      0.021418113694054032
+    ],
+    "wilcoxon_two_sided": 8.203285041438297e-13
+  },
+  {
+    "model": "model_mean",
+    "metric": "micro_f1",
+    "n_targets": 72,
+    "seen_mean": 0.5238786705520815,
+    "unseen_mean": 0.4151515880697105,
+    "seen_minus_unseen": 0.1087270824823709,
+    "bootstrap95": [
+      0.09345039378849271,
+      0.1242972122282467
+    ],
+    "wilcoxon_two_sided": 2.2257837847981105e-13
+  }
+]

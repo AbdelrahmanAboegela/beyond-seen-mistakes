@@ -18,6 +18,8 @@ paper/*.log
 paper/*.out
 paper/*.synctex.gz
 paper/main.pdf
+paper/bc/
+paper/build_check/
 .DS_Store
 Thumbs.db
 build_page-*.png

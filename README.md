@@ -64,6 +64,10 @@ you ever train a model.
 | Secondary criterion outcome | Bit accuracy drops **12.80 pp**, CI [7.38, 18.79], *p*=.00049 | The failure is not only an exact-match artifact. |
 | **RQ2.** Does local label opposition add information beyond marginal support? | Raw LOP ρ=-.632; global support ρ=-.742; partial LOP *p*=.200 | LOP adds nothing once marginal support is controlled for. Marginal support (`global_opposing_support`, $G_c$) is ordinary class imbalance, not a new statistic — but confirming it dominates the fancier local explanation is itself the useful, actionable finding: bottom-quartile criteria average 82.70% held-out accuracy vs. 40.79% for top-quartile criteria. |
 
+**Replicated on a second dataset.** The whole protocol was repeated on [CPR-Coach](https://github.com/Shunli-Wang/CPR-Coach) (13 error types, naturally co-occurring composites). Across **72 eligible compositions** the gap is **11.80 pp, 95% CI [9.03, 14.77]** — inside the ALEX-GYM-1 interval but ~6x more precisely bounded, and no longer pinned to the test's own floor (exact p=7.4e-18 against a floor of 5.4e-20). RQ2's negative result replicates more decisively too: LOP's partial association is −.005 (p=.87) over 936 units. See [`results/cpr_rq_stats.json`](results/cpr_rq_stats.json).
+
+**A preprocessing defect the second dataset exposed.** Resampling every repetition to a fixed 16 frames normalises away the quantity that *rate-defined* criteria measure. On CPR-Coach the four rate criteria scored **14.50 pp below their own trivial baselines** — worse than guessing. Restoring duration, speed and cadence recovers them (+17.73 pp lift; posture +0.67, hand −0.56) and lifts exact match from 15.72% to 37.47%. On ALEX-GYM-1 the same channels change nothing, because its criteria are largely geometric — so the defect tracks what a criterion *measures*, not which corpus it came from.
+
 The contribution is the **matched observed-composition protocol and controlled
 effect**, plus confirmation that $G_c$ (ordinary training-label imbalance) — not a
 new statistic — predicts which criteria will fail, so it doubles as a free

@@ -1,0 +1,17 @@
+{
+  "n_folds": 216,
+  "max": {
+    "random_mean": 3.712962962962963,
+    "optimized_mean": 3.712962962962963,
+    "mean_reduction_fraction": 0.0,
+    "random_max": 6,
+    "optimized_max": 6
+  },
+  "l1": {
+    "random_mean": 11.699074074074074,
+    "optimized_mean": 11.699074074074074,
+    "mean_reduction_fraction": 0.0,
+    "random_max": 40,
+    "optimized_max": 40
+  }
+}

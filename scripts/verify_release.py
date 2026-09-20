@@ -83,7 +83,34 @@ metrics = pd.read_csv(ROOT / "results/context/target_mean_metrics.csv", dtype={"
 require(set(metrics.model) == MODELS, "aggregated metrics model set is incomplete")
 require(set(zip(metrics.exercise, metrics.target)) == targets, "aggregated metrics target set is incomplete")
 
+# --- CPR-Coach, the external composition check -------------------------------
+cpr_protocol = json.loads((ROOT / "configs/cpr_protocol.json").read_text())
+cpr_targets = cpr_protocol["default_targets"]["cpr"]
+require(len(cpr_targets) == 72, f"expected 72 CPR targets, found {len(cpr_targets)}")
+
+cpr_manifest = json.loads((ROOT / "configs/cpr_matched_manifest_v3_optimized.json").read_text())
+cpr_folds = [fold for target in cpr_manifest["splits"]["cpr"].values() for fold in target.values()]
+require(len(cpr_folds) == 216, f"expected 216 CPR manifest folds, found {len(cpr_folds)}")
+for fold in cpr_folds:
+    audit = fold["audit"]
+    require(len(fold["seen_train"]) == len(fold["unseen_train"]), "CPR manifest training sizes differ")
+    require(not (set(fold["seen_train"]) & set(fold["test"])), "CPR manifest train/test row overlap")
+    require(not (set(fold["seen_train"]) & set(fold["validation"])), "CPR manifest train/validation row overlap")
+    require(audit["optimized_max_positive_count_difference"] <= audit["random_v2_max_positive_count_difference"],
+            "CPR max marginal mismatch regressed")
+
+for directory, expected in (("cpr_matched_v3_optimized", 1080), ("cpr_matched_v3_rate", 864),
+                            ("cpr_fact_anatomy", 72), ("cpr_fact_random", 72)):
+    found = len(list((ROOT / "results" / directory / "runs").glob("*.json")))
+    require(found == expected, f"{directory}: expected {expected} run records, found {found}")
+
+cpr_stats = json.loads((ROOT / "results/cpr_rq_stats.json").read_text())
+require(cpr_stats["rq1_backbones"]["exact_match"]["n_targets"] == 72, "CPR RQ1 unit count changed")
+require(cpr_stats["rq1_backbones"]["exact_match"]["seen_minus_unseen"] > 0, "CPR RQ1 effect changed sign")
+require(cpr_stats["rq2"]["all_criteria"]["partial_beyond_simple_controls"]["p_two_sided"] > .05,
+        "CPR RQ2 partial association is no longer null; the reported conclusion would change")
+
 for relative in ["paper/main.tex", "paper/Beyond_Seen_Mistakes.pdf", "paper/figures/composition_graph.png"]:
     require((ROOT / relative).is_file(), f"missing release artifact: {relative}")
 
-print("Release verified: original 180-run grid, 144 random-v2 and 144 optimized-v3 matched pairs, 36 ST-GCN runs, frozen statistics, paper, and figures.")
+print("Release verified: CPR-Coach 2,088 runs and frozen statistics; original 180-run grid, 144 random-v2 and 144 optimized-v3 matched pairs, 36 ST-GCN runs, frozen statistics, paper, and figures.")

@@ -36,17 +36,21 @@ minimizes residual criterion-marginal differences. Removing target-diagnosis
 examples then lowers exact diagnosis match from 22.65\% to 1.52\% (target
 bootstrap gap 21.13 points, 95\% CI $[9.86,34.73]$; two-sided $p=.00049$); bit
 accuracy falls 12.80 points. Every target falls, and the largest gaps occur
-where residual imbalance is smallest. A separate six-model full-target stress
-test, adding ST-GCN and an anatomical-token model, shows that topology and
-locality do not eliminate the broader failure. A label-space audit
-finds that one-bit opposing neighbors predict vulnerable criteria across models,
-but a far simpler statistic---the raw count of training examples opposing a
-criterion's target state---is a stronger predictor ($\rho=-.742$) and absorbs
-the local count's association entirely ($p=.200$ once controlled). The
-contribution is therefore a controlled composition test, an evidence-bounded
-diagnosis of its failure, and confirmation---not introduction---of a known
-imbalance signal that flags which criteria of a planned diagnosis are likely to
-fail before training.
+where residual imbalance is smallest. We then replicate the whole protocol on
+CPR-Coach, which annotates 13 error types and releases naturally co-occurring
+composites: across 72 eligible compositions the gap is 11.80 points, 95\% CI
+$[9.03,14.77]$, inside the ALEX-GYM-1 interval but six times more precisely
+bounded, and the primary test is no longer pinned to its own floor. A label-space
+audit finds that one-bit opposing neighbors predict vulnerable criteria across
+models, yet add nothing once ordinary criterion-state support is controlled for
+($p=.200$ on ALEX-GYM-1; $p=.87$ over 936 units on CPR-Coach). Finally, the
+second dataset exposes a representation defect the first conceals: resampling
+every repetition to a fixed frame count erases the quantity that rate-defined
+criteria measure, leaving four CPR criteria 14.50 points \emph{below} their own
+trivial baselines. Restoring duration, speed and cadence recovers them and
+raises exact match from 15.72\% to 37.47\%. The contribution is a controlled
+composition test, replicated externally, and an evidence-bounded diagnosis of
+its failure.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -89,11 +93,12 @@ criteria beyond ordinary marginal criterion support. Tests are two-sided; exact
 match was fixed as the sole primary endpoint before the corrected matched rerun.
 
 We contribute (i) a data-audited observed-composition protocol, (ii) a
-controlled target-present/absent comparison, (iii) a six-architecture stress
-test, and (iv) evidence that a plausible local label diagnostic is subsumed by
-ordinary per-criterion class imbalance, confirming a known
-imbalance-generalization relationship under composition shift and usable as a
-training-free check before any model is touched. Figure
+controlled target-present/absent comparison, (iii) an external replication of
+both research questions on a second, independently collected composite-error
+dataset, (iv) evidence that a plausible local label diagnostic is subsumed by
+ordinary per-criterion class imbalance, and (v) the finding that fixed-length
+temporal resampling, a near-universal preprocessing step, silently removes the
+evidence for rate-defined criteria. Figure
 \ref{fig:protocol} shows the naturally observed diagnosis spaces and targets
 retained by the support rule.
 
@@ -206,6 +211,29 @@ total from 55.08 to 33.42. Thus the conditions have identical size, validation
 and test rows, initialization, shared class weights, and zero group overlap,
 with reduced but nonzero marginal differences. This test uses four generic temporal
 backbones and averages seeds, then models, within each diagnosis.
+
+\subsection{External replication on CPR-Coach}
+\label{sec:cpr}
+ALEX-GYM-1 alone cannot show that the effect is not a property of one dataset,
+so we repeat the entire protocol on CPR-Coach \cite{wang2024cpr}, which
+annotates 13 error types and releases recordings in which two, three or four
+co-occur. Only its released 2D pose keypoints and labels are used. Each take is
+recorded on four synchronised channels, which are concatenated into one
+repetition rather than treated as four rows. Poses are Halpe body joints; the 42
+hand keypoints are discarded because their mean detector confidence is .058
+against .606 for the body, so three hand-placement criteria are effectively
+unobservable from the released skeletons. The recording group is the
+composition-pure class folder, of which every eligible composition has exactly
+three, matching the three-seed distinct-test-group rule.
+
+Applying the same frozen support rule yields 72 eligible compositions---13
+single-error and 59 double-error---from 1{,}414 repetitions, against 12 on
+ALEX-GYM-1. The larger pool also balances better: the optimized exchange cuts
+the fold-mean worst-criterion mismatch from 10.78 to 3.71 counts, roughly three
+times smaller than is achievable on ALEX-GYM-1. Labels are sparser here (1.67
+positives of 13), so an all-zero predictor already scores 87.17\% bit accuracy
+against 2.97\% exact match; exact match therefore remains the primary endpoint
+and bit accuracy is read against that baseline throughout.
 
 \subsection{Models and training}
 We use six compact controlled models, all receiving the same $16\times198$
@@ -380,6 +408,53 @@ FACT & \textbf{72.39} & \textbf{63.95} & \textbf{18.56} & 64.89 & 44.77 & \textb
 \end{tabular}
 \end{table}
 
+\subsection{RQ1 replicates on a second dataset}
+Table \ref{tab:replication} repeats the matched test on CPR-Coach. Removing the
+target composition lowers exact match from 15.72\% to 3.92\%, a gap of 11.80
+points (95\% CI $[9.03,14.77]$), with 62 of 72 compositions falling, 7 tied and
+3 reversed. The gap is positive for every backbone (12.57 Transformer, 12.18
+BiGRU, 11.78 TCN, 10.67 SSM).
+
+Two things matter more than the point estimate. The CPR-Coach estimate lies
+inside the ALEX-GYM-1 interval while being roughly six times narrower, so the
+two datasets are statistically compatible rather than merely same-signed. And
+with 72 units the primary test is no longer saturated: on ALEX-GYM-1 the exact
+Wilcoxon $p$ of $.00049$ \emph{is} the smallest value attainable at $n=12$,
+whereas here the exact value is $7.4\times10^{-18}$ against a floor of
+$5.4\times10^{-20}$, a factor of 137 above it.
+
+Two architectures added on this dataset do not support the effect. ST-GCN
+reaches only 2.22\% exact match against 0.35\%, with 64 of 72 compositions tied
+at zero, so it fails the task outright rather than failing it compositionally.
+FACT, given the frontal and lateral channels identified from measured geometry,
+shows no gap under its anatomical prior ($-3.40$ points) and a smaller one under
+a random joint map of equal size ($+4.86$); we therefore report no transfer of
+its anatomical prior to this dataset.
+
+\begin{table}[t]
+\centering
+\caption{The same protocol on both datasets. CPR-Coach numbers are the four
+matched backbones, as on ALEX-GYM-1.}
+\label{tab:replication}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrr}
+\toprule
+& ALEX-GYM-1 & CPR-Coach\\
+\midrule
+Eligible compositions & 12 & 72\\
+Exact match, target present (\%) & 22.65 & 15.72\\
+Exact match, target absent (\%) & 1.52 & 3.92\\
+Gap (points) & 21.13 & 11.80\\
+95\% CI (points) & $[9.86,34.73]$ & $[9.03,14.77]$\\
+Compositions falling & 12/12 & 62/72\\
+\midrule
+RQ2 partial LOP, controlled & $-.182$ & $-.005$\\
+RQ2 two-sided $p$ & .200 & .87\\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{RQ2: marginal support, not local opposition, is the practical predictor}
 Raw LOP is negatively associated with held-out criterion accuracy across all five
 temporal models (per-model $\rho$ from $-.367$ to $-.648$, all blocked
@@ -395,6 +470,41 @@ versus 40.79\% for the top quartile (most opposed). $G_c$ is an ordinary, target
 training labels, so this confirms---rather than introduces---a training-free
 audit signal for a proposed composition, available without running an experiment.
 
+The negative result replicates, and more decisively. Over 936 target--criterion
+units on CPR-Coach, LOP's partial rank association after the same controls is
+$-.005$ ($p=.87$); the pre-specified sensitivity that drops the three
+unobservable hand criteria gives $+.020$ ($p=.605$) over 720 units. Raw
+associations are consistent across all five architectures there ($-.231$ to
+$-.316$, each $p=10^{-4}$). One claim does not carry over and we do not restate
+it: on ALEX-GYM-1 marginal support was the stronger raw predictor
+($\rho=-.742$ against $-.632$), whereas on CPR-Coach that ordering reverses
+($-.255$ against $-.316$). What survives on both datasets is the null---local
+opposition adds nothing once ordinary support is controlled---not the ranking of
+the two raw predictors.
+
+\subsection{Fixed-length resampling erases rate-defined criteria}
+Resampling every repetition to 16 frames normalizes the time axis, which removes
+the quantity that criteria such as ``Slow Frequency'' or ``Insufficient
+Pressing'' are defined by: a two-second and a six-second repetition become the
+same tensor. Measured against each criterion's own trivial baseline on
+CPR-Coach, the four rate-defined criteria score 14.50 points \emph{below} it
+while the six postural criteria score 7.71 above---the models do worse than
+guessing exactly where the evidence has been deleted.
+
+Restoring three statistics computed before resampling---log duration, mean
+displacement per original frame, and the dominant non-DC frequency of the
+highest-variance coordinate---recovers them. Rate criteria gain 17.73 points of
+lift while postural criteria move 0.67 and hand criteria $-0.56$, so the
+channels supply rate information rather than label information. Exact match rises
+from 15.72\% to 37.47\% and the composition gap from 11.80 to 27.15 points, with
+70 of 72 compositions falling; bit accuracy rises from 86.27\%, below the
+all-zero baseline, to 91.90\% above it. On ALEX-GYM-1 the same channels change
+nothing (gap 21.13 to 19.05 points, rate-worded criteria $-2.12$), which is
+consistent: squat and deadlift criteria are largely geometric, whereas chest
+compression is intrinsically a rate task. The defect is therefore severe for
+rate-defined criteria and immaterial for postural ones---a property of the
+annotation vocabulary, not of either dataset.
+
 \section{Discussion}
 The matched comparison changes the evidential strength: target presence is
 varied while evaluation recordings and training budget are fixed. The effect
@@ -409,10 +519,23 @@ label-neighborhood mechanism but that this ordinary quantity, on its own,
 predicts held-out failure well enough to serve as a deployment-time check
 requiring no training run.
 
+The second dataset does more than widen coverage. It moves the primary test off
+its own floor, turns a same-signed result into a statistically compatible one,
+and---because its annotation vocabulary is rate-heavy where ALEX-GYM-1's is
+geometric---exposes a preprocessing defect that a single dataset of either kind
+would have hidden. That the same three channels are decisive on one dataset and
+inert on the other is itself the evidence that the defect tracks what a
+criterion measures rather than which corpus it came from.
+
 \section{Limitations}
-The study has one multi-label composition dataset and only 12 eligible
-diagnosis units. The split key identifies paired recordings, not verified
-participants. The matched test uses three test groups per diagnosis holding 1--5 repetitions
+Two datasets is still not many, and both remain recording-disjoint rather than
+participant-disjoint: neither release carries verified participant identities,
+so repeated performers may span folds. Three CPR-Coach criteria are effectively
+unobservable from its released skeletons, and its compositions are thinner
+(mostly pairs) than ALEX-GYM-1's. FACT and ST-GCN results on CPR-Coach come
+from a reduced protocol---one seed for FACT---and its anatomical joint map is
+our own reading of the domain, which is why the random-map control is reported
+beside it. The matched test uses three test groups per diagnosis holding 1--5 repetitions
 (median 5), making per-fold exact match coarse, and exchanges examples rather
 than preserving identical marginals; optimization
 roughly halves the mean worst-criterion difference, but residual imbalance
@@ -426,17 +549,18 @@ clinically intuitive but harsh; we also report bit accuracy and micro-F1.
 
 \section{Conclusion}
 On identical held-out recordings, removing a natural diagnosis from matched
-training reduces exact match by 21.13 points across four architecture families,
-even after criterion-marginal differences are substantially reduced.
-ST-GCN and anatomical tokens do not eliminate the broader stress-test gap.
-Label-space analysis predicts vulnerable criteria, and ordinary training-label
-imbalance---not local one-bit opposition---does the predicting. The result is
-a reproducible composition test, an evidence-bounded diagnosis of its failure,
-and confirmation that this known imbalance signal, not label-neighborhood
-structure, is what predicts failure here---a training-free check worth running
-before a model is trained.
+training reduces exact match by 21.13 points on ALEX-GYM-1 and 11.80 points
+across 72 compositions of CPR-Coach, the two intervals overlapping and the
+second no longer pinned to the smallest value its test can return. Label-space
+analysis predicts which criteria fail, but local one-bit opposition adds nothing
+beyond ordinary criterion-state support on either dataset. The second corpus
+also shows that resampling repetitions to a fixed frame count erases the
+evidence for rate-defined criteria, pushing them below their own trivial
+baselines until duration, speed and cadence are restored. The result is a
+reproducible composition test, externally replicated, an evidence-bounded
+diagnosis of its failure, and a preprocessing caution for any multi-criterion
+assessment whose vocabulary names a rate.
 
-\enlargethispage{4\baselineskip}
 \begin{thebibliography}{99}
 \footnotesize
 \bibitem{wang2024cpr} J. Wang \emph{et al.}, ``CPR-Coach: Recognizing composite
