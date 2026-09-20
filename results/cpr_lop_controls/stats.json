@@ -1,0 +1,115 @@
+{
+  "protocol": "matched target-absent condition; LOP computed from the frozen manifest",
+  "all_criteria": {
+    "n_target_criterion_units": 936,
+    "lop": {
+      "mean_within_target_rho": -0.3164612341579882,
+      "p_one_sided": 4.999750012499375e-05,
+      "n_permutations": 20000,
+      "null_mean": -0.00011364688731721347,
+      "n_informative_targets": 72,
+      "p_two_sided": 9.99950002499875e-05
+    },
+    "global_opposing_support": {
+      "mean_within_target_rho": -0.2548066666023996,
+      "p_one_sided": 4.999750012499375e-05,
+      "n_permutations": 20000,
+      "null_mean": 2.3922227817980178e-05,
+      "n_informative_targets": 72,
+      "p_two_sided": 9.99950002499875e-05
+    },
+    "partial_beyond_simple_controls": {
+      "partial_rank_correlation": -0.005343843473106119,
+      "p_two_sided": 0.871456427178641,
+      "n_target_criterion_units": 936,
+      "n_targets": 72,
+      "controls": [
+        "global_opposing_rate",
+        "target_bit"
+      ],
+      "note": "Target frequency, target cardinality, and total Hamming-1 support are constant within diagnosis and cancel under within-diagnosis ranking."
+    },
+    "quartile_contrast": {
+      "bottom_quartile_accuracy": 0.8505698005698007,
+      "top_quartile_accuracy": 0.5956190476190477,
+      "note": "Descriptive; reuses the RQ2 sample rather than validating on held-out units."
+    }
+  },
+  "excluding_hand_criteria": {
+    "n_target_criterion_units": 720,
+    "lop": {
+      "mean_within_target_rho": -0.2664806812789205,
+      "p_one_sided": 4.999750012499375e-05,
+      "n_permutations": 20000,
+      "null_mean": -0.0003492061779720897,
+      "n_informative_targets": 72,
+      "p_two_sided": 9.99950002499875e-05
+    },
+    "global_opposing_support": {
+      "mean_within_target_rho": -0.1204412752825979,
+      "p_one_sided": 0.0015999200039998,
+      "n_permutations": 20000,
+      "null_mean": -0.00030419532580769175,
+      "n_informative_targets": 72,
+      "p_two_sided": 0.0031998400079996
+    },
+    "partial_beyond_simple_controls": {
+      "partial_rank_correlation": 0.020439499888151844,
+      "p_two_sided": 0.6049697515124244,
+      "n_target_criterion_units": 720,
+      "n_targets": 72,
+      "controls": [
+        "global_opposing_rate",
+        "target_bit"
+      ],
+      "note": "Target frequency, target cardinality, and total Hamming-1 support are constant within diagnosis and cancel under within-diagnosis ranking."
+    },
+    "quartile_contrast": {
+      "bottom_quartile_accuracy": 0.7588949275362318,
+      "top_quartile_accuracy": 0.5990924956369982,
+      "note": "Descriptive; reuses the RQ2 sample rather than validating on held-out units."
+    }
+  },
+  "per_model": {
+    "gru": {
+      "mean_within_target_rho": -0.30523289879536875,
+      "p_one_sided": 4.999750012499375e-05,
+      "n_permutations": 20000,
+      "null_mean": 0.00014084271914880216,
+      "n_informative_targets": 72,
+      "p_two_sided": 9.99950002499875e-05
+    },
+    "ssm": {
+      "mean_within_target_rho": -0.3164183592281374,
+      "p_one_sided": 4.999750012499375e-05,
+      "n_permutations": 20000,
+      "null_mean": 0.00013365586670099368,
+      "n_informative_targets": 72,
+      "p_two_sided": 9.99950002499875e-05
+    },
+    "stgcn": {
+      "mean_within_target_rho": -0.23146290618013485,
+      "p_one_sided": 4.999750012499375e-05,
+      "n_permutations": 20000,
+      "null_mean": -0.0004075376962123995,
+      "n_informative_targets": 72,
+      "p_two_sided": 9.99950002499875e-05
+    },
+    "tcn": {
+      "mean_within_target_rho": -0.30519389700662436,
+      "p_one_sided": 4.999750012499375e-05,
+      "n_permutations": 20000,
+      "null_mean": 8.339003317541153e-05,
+      "n_informative_targets": 72,
+      "p_two_sided": 9.99950002499875e-05
+    },
+    "transformer": {
+      "mean_within_target_rho": -0.30572475123444104,
+      "p_one_sided": 4.999750012499375e-05,
+      "n_permutations": 20000,
+      "null_mean": 0.00019189499603310903,
+      "n_informative_targets": 72,
+      "p_two_sided": 9.99950002499875e-05
+    }
+  }
+}
