@@ -109,9 +109,22 @@ def matched() -> None:
     plt.close(fig)
 
 
+def cpr_composition() -> None:
+    """Second-dataset composition space; skipped when CPR-Coach is absent."""
+    import os, subprocess, sys
+    if not (ROOT / "data" / "cpr_coach").exists():
+        print("skipping CPR composition figure: data/cpr_coach not present")
+        return
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "src")   # the plotter imports cpr_data
+    subprocess.run([sys.executable, str(ROOT / "src" / "plot_cpr_composition_graph.py")],
+                   cwd=ROOT, env=env, check=True)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rq1()
     rq2()
     matched()
+    cpr_composition()
     print(f"Wrote figures to {OUT}")

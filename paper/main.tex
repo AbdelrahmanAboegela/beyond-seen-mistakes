@@ -18,16 +18,16 @@
 \setlength{\floatsep}{6pt plus 2pt minus 2pt}
 \setlength{\intextsep}{6pt plus 2pt minus 2pt}
 
-\title{Beyond Seen Mistakes: A Matched Test of Natural Error-Composition\\Generalization in Exercise Assessment}
+\title{Beyond Seen Mistakes: A Matched Test of Natural Error-Composition\\Generalization in Multi-Criterion Skill Assessment}
 \author{\IEEEauthorblockN{Anonymous Author(s)}\\\IEEEauthorblockA{Under double-blind review}}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Automated exercise assessment predicts several biomechanical criteria at once,
-yet grouped evaluation does not isolate whether a familiar diagnosis was present
-in training. We introduce a recording-pair-disjoint matched test on public
+Automated skill assessment---of exercise form, of clinical technique---predicts
+several criteria at once, yet grouped evaluation does not isolate whether a
+familiar diagnosis was present in training. We introduce a recording-pair-disjoint matched test on public
 ALEX-GYM-1 poses. For each of 12 natural diagnoses, target-present and
 target-absent models use identical test recordings, validation data,
 initialization, class weights, and training-set size. Across four temporal
@@ -54,8 +54,8 @@ its failure.
 \end{abstract}
 
 \begin{IEEEkeywords}
-exercise assessment, multi-label classification, compositional generalization,
-skeleton sequences, label-space diagnostics
+skill assessment, exercise assessment, multi-label classification,
+compositional generalization, skeleton sequences, label-space diagnostics
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -105,7 +105,8 @@ retained by the support rule.
 \begin{figure*}[t]
 \centering
 \includegraphics[width=.98\textwidth]{figures/composition_graph.png}
-\caption{Naturally observed diagnosis spaces. Node area represents repetition
+\caption{Naturally observed ALEX-GYM-1 diagnosis spaces; Fig.~\ref{fig:cpr}
+shows the same for CPR-Coach. Node area represents repetition
 frequency, filled nodes are the 12 targets retained by the final support rule,
 and edges join diagnoses differing in exactly one criterion. Lunge has no filled
 node because its candidate targets cannot preserve the required train/validation
@@ -152,17 +153,21 @@ trainer criterion to an error bit: one denotes a violated criterion. Table
 
 \begin{table}[t]
 \centering
-\caption{Processed ALEX-GYM-1 data. ``Groups'' are paired recording identifiers,
-not verified participant identities.}
+\caption{Both processed datasets. ``Groups'' are the split unit: paired
+recording identifiers for ALEX-GYM-1 and composition-pure class folders for
+CPR-Coach. Neither is a verified participant identity.}
 \label{tab:data}
 \small
-\begin{tabular}{lrrrr}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{llrrrr}
 \toprule
-Exercise & Repetitions & Criteria & Diagnoses & Groups\\
+Dataset & Task & Reps. & Crit. & Diag. & Groups\\
 \midrule
-Squat & 294 & 6 & 22 & 59\\
-Deadlift & 269 & 5 & 16 & 55\\
-Lunge & 106 & 7 & 30 & 53\\
+ALEX-GYM-1 & Squat & 294 & 6 & 22 & 59\\
+& Deadlift & 269 & 5 & 16 & 55\\
+& Lunge & 106 & 7 & 30 & 53\\
+\midrule
+CPR-Coach & Compression & 1{,}414 & 13 & 88 & 234\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -213,7 +218,6 @@ with reduced but nonzero marginal differences. This test uses four generic tempo
 backbones and averages seeds, then models, within each diagnosis.
 
 \subsection{External replication on CPR-Coach}
-\label{sec:cpr}
 ALEX-GYM-1 alone cannot show that the effect is not a property of one dataset,
 so we repeat the entire protocol on CPR-Coach \cite{wang2024cpr}, which
 annotates 13 error types and releases recordings in which two, three or four
@@ -226,9 +230,21 @@ unobservable from the released skeletons. The recording group is the
 composition-pure class folder, of which every eligible composition has exactly
 three, matching the three-seed distinct-test-group rule.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=.92\columnwidth]{figures/cpr_composition_graph.png}
+\caption{CPR-Coach composition space, laid out by cardinality because 88
+compositions over 13 criteria do not project legibly. Node area is repetition
+frequency, filled nodes are the 72 compositions the support rule retains, and
+edges join diagnoses differing in one criterion. Every single and double error
+qualifies; the triples and quadruples have eight repetitions in one folder each
+and drop out, as lunge does on ALEX-GYM-1.}
+\label{fig:cpr}
+\end{figure}
+
 Applying the same frozen support rule yields 72 eligible compositions---13
 single-error and 59 double-error---from 1{,}414 repetitions, against 12 on
-ALEX-GYM-1. The larger pool also balances better: the optimized exchange cuts
+ALEX-GYM-1 (Fig.~\ref{fig:cpr}). The larger pool also balances better: the optimized exchange cuts
 the fold-mean worst-criterion mismatch from 10.78 to 3.71 counts, roughly three
 times smaller than is achievable on ALEX-GYM-1. Labels are sparser here (1.67
 positives of 13), so an all-zero predictor already scores 87.17\% bit accuracy
@@ -388,8 +404,9 @@ are.
 
 \begin{table}[t]
 \centering
-\caption{Target-equal performance (\%). Validation is ordinary group-held-out;
-LOCO deliberately withholds one natural diagnosis.}
+\caption{Target-equal ALEX-GYM-1 performance (\%) in the secondary full-target
+stress test. Validation is ordinary group-held-out; LOCO deliberately withholds
+one natural diagnosis.}
 \label{tab:models}
 \scriptsize
 \setlength{\tabcolsep}{3.2pt}
@@ -409,7 +426,10 @@ FACT & \textbf{72.39} & \textbf{63.95} & \textbf{18.56} & 64.89 & 44.77 & \textb
 \end{table}
 
 \subsection{RQ1 replicates on a second dataset}
-Table \ref{tab:replication} repeats the matched test on CPR-Coach. Removing the
+Table \ref{tab:replication} repeats the matched test on CPR-Coach. The headline
+comparison deliberately uses the unmodified representation, so that it
+reproduces the pre-specified ALEX-GYM-1 protocol rather than a better one; the
+improved condition is reported separately in Sec.~\ref{sec:rate}. Removing the
 target composition lowers exact match from 15.72\% to 3.92\%, a gap of 11.80
 points (95\% CI $[9.03,14.77]$), with 62 of 72 compositions falling, 7 tied and
 3 reversed. The gap is positive for every backbone (12.57 Transformer, 12.18
@@ -483,6 +503,7 @@ opposition adds nothing once ordinary support is controlled---not the ranking of
 the two raw predictors.
 
 \subsection{Fixed-length resampling erases rate-defined criteria}
+\label{sec:rate}
 Resampling every repetition to 16 frames normalizes the time axis, which removes
 the quantity that criteria such as ``Slow Frequency'' or ``Insufficient
 Pressing'' are defined by: a two-second and a six-second repetition become the
@@ -533,14 +554,18 @@ participant-disjoint: neither release carries verified participant identities,
 so repeated performers may span folds. Three CPR-Coach criteria are effectively
 unobservable from its released skeletons, and its compositions are thinner
 (mostly pairs) than ALEX-GYM-1's. FACT and ST-GCN results on CPR-Coach come
-from a reduced protocol---one seed for FACT---and its anatomical joint map is
-our own reading of the domain, which is why the random-map control is reported
-beside it. The matched test uses three test groups per diagnosis holding 1--5 repetitions
+from a reduced protocol---one seed for FACT---and its anatomical joint map, like
+ALEX-GYM-1's, is a manual reading of the domain, which is why FACT stays a
+comparator and why the random-map control is reported beside it. The restored
+rate channels are also only a partial remedy: they recover the frequency- and
+depth-defined criteria but leave Jump Pressing and Excessive Pressing still
+below their trivial baselines, so duration, speed and cadence do not capture
+everything those criteria depend on. The matched test uses three test groups
+per diagnosis holding 1--5 repetitions
 (median 5), making per-fold exact match coarse, and exchanges examples rather
 than preserving identical marginals; optimization
 roughly halves the mean worst-criterion difference, but residual imbalance
-prevents a causal interpretation. Manual criterion--anatomy mappings affect
-FACT, which is why it is only a comparator. Thresholds are fixed at 0.5, with
+prevents a causal interpretation. Thresholds are fixed at 0.5, with
 no calibrated-probability claim. Missing-frame rates reach 14.87\% in the
 squat lateral view; interpolation reduces but cannot eliminate pose-detector
 uncertainty. The $G_c$ quartile split (17 units/quartile) reuses the RQ2
