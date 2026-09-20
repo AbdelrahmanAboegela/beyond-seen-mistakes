@@ -49,6 +49,22 @@ def criteria_of(exercise):
     return CPR_ERRORS if exercise == CPR_EXERCISE else CRITERIA[exercise]
 
 
+# CPR-Coach FACT input.  FACT is a two-view model by design; CPR ships four
+# channels whose roles the release does not document.  We identify them from
+# measured geometry -- mean shoulder width over torso height, which separates
+# the channels by a factor of seven -- giving ch1 frontal and ch3 lateral.
+# The assignment is therefore derived from the data, not assumed.
+CPR_FACT_CHANNELS = (1, 3)
+
+
+def fact_view_input(X, joints=26, coords=2, channels=CPR_FACT_CHANNELS):
+    """Select the frontal and lateral channels and drop the two oblique ones."""
+    per = joints * coords
+    if X.shape[-1] < per * (max(channels) + 1):
+        raise ValueError(f"expected at least {per*(max(channels)+1)} pose dims, got {X.shape[-1]}")
+    return np.concatenate([X[:, :, c*per:(c+1)*per] for c in channels], axis=-1)
+
+
 def state_counts(Y: np.ndarray, idx: np.ndarray) -> np.ndarray:
     return np.asarray([[(Y[idx, c] == s).sum() for s in (0, 1)] for c in range(Y.shape[1])])
 
@@ -214,12 +230,26 @@ def seed_all(seed: int) -> None:
     random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
 
 
-def train_condition(X, Y, train, val, test, kind, seed, shared_pos_weight, epochs=55, patience=15):
+def train_condition(X, Y, train, val, test, kind, seed, shared_pos_weight, epochs=55, patience=15,
+                    geometry='alexgym', map_control='anatomy'):
     seed_all(seed)
+    if kind == "fact":
+        # FACT is a two-view model, so it sees only the frontal and lateral
+        # channels.  This must happen before the loaders are built, or the
+        # model receives all four and the reshape fails.
+        if geometry != "cpr":
+            raise NotImplementedError("FACT in the matched protocol is wired for CPR-Coach only")
+        X = fact_view_input(X)
     train_loader = DataLoader(DS(X, Y, train), 32, shuffle=True)
     val_loader = DataLoader(DS(X, Y, val), 64)
     test_loader = DataLoader(DS(X, Y, test), 64)
-    model = build(kind, X.shape[-1], Y.shape[1])
+    if kind == "fact":
+        # Trains under the same loop and budget as the backbones, so the
+        # comparison against them is like-for-like.
+        from train_fact import FACT
+        model = FACT("cpr", joints=26, coords=2, map_control=map_control)
+    else:
+        model = build(kind, X.shape[-1], Y.shape[1], geometry=geometry)
     loss_fn = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(shared_pos_weight, dtype=torch.float32))
     optimizer = torch.optim.AdamW(model.parameters(), lr=1.5e-3, weight_decay=2e-4)
     best, state, stale, started = -1.0, None, 0, time.time()
@@ -241,7 +271,8 @@ def train_condition(X, Y, train, val, test, kind, seed, shared_pos_weight, epoch
             "train_seconds": time.time() - started, "n_params": sum(p.numel() for p in model.parameters())}
 
 
-def run(exercise, target, seed, model, data, epochs=55, manifest=None, with_rate=False):
+def run(exercise, target, seed, model, data, epochs=55, manifest=None, with_rate=False,
+        map_control='anatomy'):
     X, Y, compositions, groups = load_dataset(data, exercise, T=16, with_rate=with_rate)
     if manifest:
         seen, unseen, val, test, audit = make_optimized_manifest_split(
@@ -253,22 +284,27 @@ def run(exercise, target, seed, model, data, epochs=55, manifest=None, with_rate
     # Identical initialization seed isolates the training-set composition change.
     result = {"exercise": exercise, "target": target, "seed": seed, "model": model,
               "criteria": criteria_of(exercise), "with_rate": bool(with_rate),
+              "map_control": map_control,
               "split_audit": audit}
     common_union = np.union1d(seen, unseen)
     pos = Y[common_union].sum(0); neg = len(common_union) - pos
     shared_pos_weight = np.clip(neg / np.maximum(pos, 1), .25, 8)
     result["shared_pos_weight"] = shared_pos_weight.tolist()
-    result["seen"] = train_condition(X, Y, seen, val, test, model, seed, shared_pos_weight, epochs)
-    result["unseen"] = train_condition(X, Y, unseen, val, test, model, seed, shared_pos_weight, epochs)
+    geometry = "cpr" if exercise == CPR_EXERCISE else "alexgym"
+    result["seen"] = train_condition(X, Y, seen, val, test, model, seed, shared_pos_weight, epochs,
+                                     geometry=geometry, map_control=map_control)
+    result["unseen"] = train_condition(X, Y, unseen, val, test, model, seed, shared_pos_weight, epochs,
+                                       geometry=geometry, map_control=map_control)
     return result
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--data", default="data")
     ap.add_argument("--exercise", required=True); ap.add_argument("--target", required=True)
-    ap.add_argument("--seed", type=int, required=True); ap.add_argument("--model", default="tcn", choices=["tcn", "gru", "transformer", "ssm", "stgcn"])
+    ap.add_argument("--seed", type=int, required=True); ap.add_argument("--model", default="tcn", choices=["tcn", "gru", "transformer", "ssm", "stgcn", "fact"])
     ap.add_argument("--epochs", type=int, default=55); ap.add_argument("--manifest")
     ap.add_argument("--audit-only", action="store_true"); ap.add_argument("--out", required=True)
+    ap.add_argument("--map-control", default="anatomy", choices=["anatomy", "random", "permuted"])
     ap.add_argument("--with-rate", action="store_true",
                     help="append duration/speed/cadence features destroyed by resampling")
     a = ap.parse_args()
@@ -279,6 +315,6 @@ if __name__ == "__main__":
         result = {"exercise": a.exercise, "target": a.target, "seed": a.seed, "split_audit": audit}
     else:
         result = run(a.exercise, a.target, a.seed, a.model, a.data, a.epochs, a.manifest,
-                     with_rate=a.with_rate)
+                     with_rate=a.with_rate, map_control=a.map_control)
     out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True); out.write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

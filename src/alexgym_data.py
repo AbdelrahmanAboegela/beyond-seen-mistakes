@@ -1,6 +1,9 @@
 from pathlib import Path
 import json,numpy as np,pandas as pd
 
+from temporal_features import (N_RATE_FEATURES, append_constant_channels,
+                               rate_features, standardize)
+
 PREPROCESS_VERSION = "alexgym-v2-interpolate-whole-frame-missing"
 
 CRITERIA={
@@ -41,13 +44,15 @@ def normalize_pose(x):
  scale=float(np.median(sizes)) if len(sizes) else 1.0
  return x/max(scale,1e-3)
 
-def load_exercise(root,exercise='squat',T=16):
+def load_exercise(root,exercise='squat',T=16,with_rate=False):
  root=Path(root)
- cache=root/f'{exercise}_T16.npz'
+ # A separate cache and version tag keep the published artefact byte-identical.
+ cache=root/(f'{exercise}_T16_rate.npz' if with_rate else f'{exercise}_T16.npz')
+ want=PREPROCESS_VERSION+('-rate' if with_rate else '')
  if T==16 and cache.exists() and (root/f'{exercise}_df.pkl').exists():
   z=np.load(cache)
   version=str(z['preprocess_version'].item()) if 'preprocess_version' in z.files else ''
-  if version==PREPROCESS_VERSION:
+  if version==want:
    df=pd.read_pickle(root/f'{exercise}_df.pkl'); return z['X'],z['Y'],z['co'],z['g'],df
  df=pd.read_excel(root/f'{exercise}.xlsx');front=json.load(open(root/f'front_pose_{exercise}.json'));lat=json.load(open(root/f'lat_pose_{exercise}.json'))
  # A bare assert is stripped by `python -O`; zip() would then truncate to the
@@ -55,21 +60,26 @@ def load_exercise(root,exercise='squat',T=16):
  if not (len(df)==len(front)==len(lat)):
   raise ValueError(f'{exercise}: workbook/front/lateral lengths differ: {len(df)}, {len(front)}, {len(lat)}. The three files must be row-aligned; see data/README.md.')
  X=[]
- quality=[];keep=[];excluded=[]
+ quality=[];keep=[];excluded=[];rates=[]
  for row_idx,(fs,ls) in enumerate(zip(front,lat,strict=True)):
   fs,fv=fill_missing_frames(fs);ls,lv=fill_missing_frames(ls)
   if not fv.any() or not lv.any():
    excluded.append({'raw_row':int(row_idx),'front_has_valid_frame':bool(fv.any()),
                     'lateral_has_valid_frame':bool(lv.any())})
    continue
+  # rate statistics come from the pre-resampling sequences, which is exactly
+  # what resampling destroys for the 'slow'/'simultaneous' criteria
+  rates.append(np.concatenate([rate_features(fs),rate_features(ls)]))
   f=normalize_pose(resample(fs,T));l=normalize_pose(resample(ls,T));X.append(np.concatenate([f.reshape(T,-1),l.reshape(T,-1)],-1))
   quality.append((float(fv.mean()),float(lv.mean()),int((~fv).sum()),int((~lv).sum())))
   keep.append(row_idx)
  df=df.iloc[keep].copy().reset_index(drop=True)
- X=np.stack(X);Y=(df[CRITERIA[exercise]].fillna(0).to_numpy()<=0).astype(np.float32);co=np.array([''.join(map(str,r.astype(int))) for r in Y]);g=df['Num Video Frontal'].to_numpy()
+ X=np.stack(X)
+ if with_rate: X=append_constant_channels(X,standardize(np.stack(rates)))
+ Y=(df[CRITERIA[exercise]].fillna(0).to_numpy()<=0).astype(np.float32);co=np.array([''.join(map(str,r.astype(int))) for r in Y]);g=df['Num Video Frontal'].to_numpy()
  q=np.asarray(quality)
  df['_front_valid_fraction']=q[:,0];df['_lateral_valid_fraction']=q[:,1]
  df['_front_missing_frames']=q[:,2].astype(int);df['_lateral_missing_frames']=q[:,3].astype(int)
- df.attrs['preprocess_version']=PREPROCESS_VERSION
+ df.attrs['preprocess_version']=want
  df.attrs['excluded_no_valid_view']=excluded
  return X,Y,co,g,df

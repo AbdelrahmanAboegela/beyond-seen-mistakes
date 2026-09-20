@@ -78,20 +78,51 @@ class GraphBlock(nn.Module):
     def forward(self,x,A): # B,T,V,C
         x=torch.matmul(x.permute(0,1,3,2),A.t()).permute(0,1,3,2).contiguous(); x=self.lin(x); x=x.permute(0,3,1,2); x=self.act(self.norm(self.temp(x))); return x.permute(0,2,3,1)
 class STGCNModel(nn.Module):
-    def __init__(self,nout,d=48):
-        super().__init__(); self.register_buffer('A',adjacency()); self.b1=GraphBlock(3,d); self.b2=GraphBlock(d,d); self.head=nn.Sequential(nn.Linear(4*d,d),nn.GELU(),nn.Dropout(.12),nn.Linear(d,nout))
+    """Spatial-graph/temporal blocks per view, then fused.
+
+    The defaults are ALEX-GYM-1 (two views, MediaPipe-33, 3D) so the published
+    model is unchanged.  CPR-Coach passes its own geometry (four channels,
+    Halpe-26, 2D) and skeleton.  Any trailing channels beyond the pose block --
+    the rate statistics -- bypass the graph and join at the head, because they
+    are per-repetition scalars with no place on a skeleton.
+    """
+    def __init__(self,nout,d=48,views=2,joints=33,coords=3,A=None,extra=0):
+        super().__init__(); self.register_buffer('A',adjacency() if A is None else A)
+        self.views,self.joints,self.coords,self.extra=views,joints,coords,extra
+        self.b1=GraphBlock(coords,d); self.b2=GraphBlock(d,d)
+        self.head=nn.Sequential(nn.Linear(2*views*d+extra,d),nn.GELU(),nn.Dropout(.12),nn.Linear(d,nout))
     def one(self,z):
         h=self.b2(self.b1(z,self.A),self.A); # B,T,V,D
         return torch.cat([h.mean((1,2)),h.amax(1).mean(1)],1)
     def forward(self,x):
-        B,T,D=x.shape; v=D//2; f=x[:,:,:v].reshape(B,T,33,3); l=x[:,:,v:].reshape(B,T,33,3); return self.head(torch.cat([self.one(f),self.one(l)],1))
+        B,T,D=x.shape; per=self.joints*self.coords
+        if D<per*self.views:
+            raise ValueError(f"expected at least {per*self.views} pose dims, got {D}")
+        parts=[self.one(x[:,:,i*per:(i+1)*per].reshape(B,T,self.joints,self.coords))
+               for i in range(self.views)]
+        if self.extra:
+            parts.append(x[:,0,per*self.views:])   # constant along time
+        return self.head(torch.cat(parts,1))
 
-def build(kind,din,nout):
+# Pose geometry per dataset: (views, joints, coords).  Only the graph model
+# needs it; the sequence backbones consume a flat per-frame vector.
+GEOMETRY={'alexgym':(2,33,3),'cpr':(4,26,2)}
+
+
+def build(kind,din,nout,geometry='alexgym'):
     if kind=='tcn': return TCN(din,nout)
     if kind=='gru': return GRUModel(din,nout)
     if kind=='transformer': return TransformerModel(din,nout)
     if kind=='ssm': return SSMModel(din,nout)
-    if kind=='stgcn': return STGCNModel(nout)
+    if kind=='stgcn':
+        views,joints,coords=GEOMETRY[geometry]
+        extra=din-views*joints*coords
+        if extra<0: raise ValueError(f"{geometry}: {din} dims is smaller than the pose block")
+        A=None
+        if geometry!='alexgym':
+            from modern_models import HALPE26_EDGES,normalized_adjacency
+            A=normalized_adjacency(HALPE26_EDGES,joints)
+        return STGCNModel(nout,views=views,joints=joints,coords=coords,A=A,extra=extra)
     raise ValueError(kind)
 
 def run(ex,target,seed,kind,data,epochs=100,checkpoint=None,min_train_state=DEFAULT_MIN_TRAIN_STATE,min_val_state=DEFAULT_MIN_VAL_STATE):

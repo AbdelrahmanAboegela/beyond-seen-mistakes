@@ -29,6 +29,26 @@ PARENTS={
     23:23,24:24,25:23,26:24,27:25,28:26,29:27,30:28,31:29,32:30,
 }
 
+# Halpe-26 body connectivity, used for CPR-Coach.  Indices 0-16 follow COCO;
+# 17-19 add head/neck/mid-hip and 20-25 the feet.  This is the published
+# skeleton definition, not a choice we make.
+HALPE26_EDGES=[(0,1),(0,2),(1,3),(2,4),
+               (5,18),(6,18),(17,18),(18,19),(19,11),(19,12),
+               (5,7),(7,9),(6,8),(8,10),
+               (11,13),(13,15),(12,14),(14,16),
+               (15,24),(24,20),(24,22),(16,25),(25,21),(25,23)]
+
+
+def normalized_adjacency(edges, V):
+    """Symmetric normalised adjacency with self loops for an arbitrary skeleton."""
+    import numpy as _np
+    A=_np.eye(V,dtype=_np.float32)
+    for i,j in edges:
+        if i<V and j<V: A[i,j]=A[j,i]=1
+    deg=A.sum(1); D=_np.diag(1/_np.sqrt(_np.maximum(deg,1e-6)))
+    return torch.tensor(D@A@D,dtype=torch.float32)
+
+
 def physical_adjacency(V=33):
     A=np.eye(V,dtype=np.float32)
     for i,j in EDGES:
@@ -63,18 +83,28 @@ HOPS=hop_adjacencies()
 APHYS=physical_adjacency()
 
 
-def split_pose(x:torch.Tensor):
-    """B,T,198 -> B,2,T,33,3."""
-    B,T,D=x.shape
-    assert D==198, D
-    return x.view(B,T,2,33,3).permute(0,2,1,3,4).contiguous()
+def split_pose(x:torch.Tensor,views=2,joints=33,coords=3):
+    """B,T,views*joints*coords -> B,views,T,joints,coords.
 
-def pose_features(x:torch.Tensor, mode='jbm'):
-    """Return B,2,T,V,C for joints/bones/motion combinations.
-
-    mode: j=joint xyz, b=bone vectors, m=temporal motion.
+    Defaults are ALEX-GYM-1 (two views, MediaPipe-33, 3D).  CPR-Coach passes
+    its own geometry; a bare assert would be stripped under ``python -O`` and
+    the view would silently reshape wrong, so this raises.
     """
-    p=split_pose(x)
+    B,T,D=x.shape
+    want=views*joints*coords
+    if D!=want:
+        raise ValueError(f"expected {want} dims (views={views}, joints={joints}, coords={coords}), got {D}")
+    return x.view(B,T,views,joints,coords).permute(0,2,1,3,4).contiguous()
+
+def pose_features(x:torch.Tensor, mode='jbm', views=2, joints=33, coords=3):
+    """Return B,views,T,V,C for joints/bones/motion combinations.
+
+    mode: j=joint xyz, b=bone vectors, m=temporal motion.  Bone mode needs a
+    parent table and is therefore MediaPipe-33 only.
+    """
+    if 'b' in mode and joints!=33:
+        raise ValueError("bone features require the MediaPipe-33 parent table")
+    p=split_pose(x,views=views,joints=joints,coords=coords)
     fs=[]
     if 'j' in mode: fs.append(p)
     if 'b' in mode:
@@ -234,7 +264,32 @@ class GambaStyle(nn.Module):
         p=pose_features(x,self.features); B,W,T,V,C=p.shape; h=self.inp(p).reshape(B*W,T,V,-1); h=self.one(h).reshape(B,W,T,V,-1); logits=self.head(h); return (logits,{}) if return_aux else logits
 
 # Criterion maps: derived from the original annotation wording and MediaPipe topology; no new labels.
+# CPR-Coach criterion -> (view, Halpe-26 joints).  The view labels are NOT a
+# guess: channel roles were identified from measured geometry (shoulder width
+# over torso height, a 7x spread), giving ch1 as frontal and ch3 as lateral.
+# The joint sets are our reading of CPR biomechanics and therefore ARE an
+# authored choice, which is why the map_control='random' ablation is reported
+# alongside: if the anatomy map is load-bearing, the two must differ.
+# Halpe-26: 5/6 shoulders, 7/8 elbows, 9/10 wrists, 11/12 hips, 13/14 knees,
+# 15/16 ankles, 17 head, 18 neck, 19 mid-hip.
+ANAT_MAP_CPR=[
+ ('F',[7,8,9,10]),              # Overlap Hands
+ ('F',[9,10]),                  # Clenching Hands
+ ('F',[5,6,7,8,9,10]),          # Single Hand
+ ('L',[5,6,7,8,9,10]),          # Bending Arms
+ ('F',[5,6,7,8,9,10,18]),       # Tilting Arms
+ ('L',[11,12,13,14,15,16,18,19]),  # Jump Pressing
+ ('L',[11,12,13,14,15,16,19]),  # Squatting
+ ('L',[11,12,13,14,15,16,18,19]),  # Standing
+ ('F',[5,6,9,10,18,19]),        # Wrong Position
+ ('L',[5,6,7,8,9,10]),          # Insufficient Pressing
+ ('L',[5,6,9,10]),              # Slow Frequency
+ ('L',[5,6,7,8,9,10]),          # Excessive Pressing
+ ('F',[5,6,9,10,19]),           # Random Position Pressing
+]
+
 ANAT_MAP={
+'cpr':ANAT_MAP_CPR,
 'squat':[
  ('F',[23,24,25,26,27,28,29,30,31,32]),
  ('L',[25,26,27,28,29,30,31,32]),

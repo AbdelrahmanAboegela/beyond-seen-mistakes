@@ -41,32 +41,32 @@ class FACT(nn.Module):
     subgraph mask.  Its token is classified both by a local linear decision and
     criterion/state prototypes.  No other-label context is available at inference.
     """
-    def __init__(self,exercise,d=56,ed=32,features='j',soft_mask=True,use_proto=True,global_mask=False,shared_adapter=False,map_control='anatomy'):
-        super().__init__();self.ex=exercise;self.C=len(ANAT_MAP[exercise]);self.features=features;self.soft_mask=soft_mask;self.use_proto=use_proto;self.global_mask=global_mask;self.shared_adapter=shared_adapter;self.map_control=map_control
-        cin=33*3*len(features);self.front=ViewEncoder(cin,d);self.lat=ViewEncoder(cin,d)
+    def __init__(self,exercise,d=56,ed=32,features='j',soft_mask=True,use_proto=True,global_mask=False,shared_adapter=False,map_control='anatomy',joints=33,coords=3):
+        super().__init__();self.ex=exercise;self.C=len(ANAT_MAP[exercise]);self.features=features;self.soft_mask=soft_mask;self.use_proto=use_proto;self.global_mask=global_mask;self.shared_adapter=shared_adapter;self.map_control=map_control;self.joints=joints;self.coords=coords
+        cin=joints*coords*len(features);self.front=ViewEncoder(cin,d);self.lat=ViewEncoder(cin,d)
         self.adapter=nn.ModuleList([nn.Sequential(nn.Linear(2*d,ed),nn.GELU(),nn.LayerNorm(ed)) for _ in range(1 if shared_adapter else self.C)])
         self.local_w=nn.Parameter(torch.randn(self.C,ed)*.04);self.local_b=nn.Parameter(torch.zeros(self.C))
         self.proto=nn.Parameter(torch.randn(self.C,2,ed)*.08);self.log_temp=nn.Parameter(torch.tensor(-.3));self.proto_mix=nn.Parameter(torch.tensor(-.8))
-        masks=torch.zeros(self.C,33);views=[]
-        for c,(v,joints) in enumerate(ANAT_MAP[exercise]):
-            masks[c,joints]=1.;views.append(0 if v=='F' else 1)
+        masks=torch.zeros(self.C,joints);views=[]
+        for c,(v,joint_ids) in enumerate(ANAT_MAP[exercise]):
+            masks[c,joint_ids]=1.;views.append(0 if v=='F' else 1)
         if map_control=='permuted':
             masks=torch.roll(masks,1,0);views=list(np.roll(np.asarray(views),1))
         elif map_control=='random':
-            gen=torch.Generator().manual_seed({'squat':3101,'deadlift':3102,'lunges':3103}[exercise])
+            gen=torch.Generator().manual_seed({'squat':3101,'deadlift':3102,'lunges':3103,'cpr':3104}[exercise])
             random_masks=torch.zeros_like(masks)
-            for c in range(self.C):random_masks[c,torch.randperm(33,generator=gen)[:int(masks[c].sum())]]=1.
+            for c in range(self.C):random_masks[c,torch.randperm(joints,generator=gen)[:int(masks[c].sum())]]=1.
             masks=random_masks
         elif map_control!='anatomy':raise ValueError(map_control)
         self.register_buffer('base_masks',masks);self.register_buffer('views',torch.tensor(views,dtype=torch.long))
         # learned residual can softly expand the anatomy prior without making the model global
-        self.mask_resid=nn.Parameter(torch.zeros(self.C,33))
+        self.mask_resid=nn.Parameter(torch.zeros(self.C,joints))
     def tokens(self,x):
-        p=pose_features(x,self.features) # B,2,T,33,F
+        p=pose_features(x,self.features,views=2,joints=self.joints,coords=self.coords) # B,2,T,V,F
         B,W,T,V,D=p.shape;outs=[]
         for c in range(self.C):
             if self.global_mask:
-                m=torch.ones(33,device=p.device)
+                m=torch.ones(self.joints,device=p.device)
             elif self.soft_mask:
                 # Prior: annotated joints start near 1, others near .05; residual learns controlled expansion.
                 base=self.base_masks[c]*3.0+(1-self.base_masks[c])*(-3.0)
