@@ -110,7 +110,7 @@ require(cpr_stats["rq1_backbones"]["exact_match"]["seen_minus_unseen"] > 0, "CPR
 require(cpr_stats["rq2"]["all_criteria"]["partial_beyond_simple_controls"]["p_two_sided"] > .05,
         "CPR RQ2 partial association is no longer null; the reported conclusion would change")
 
-for relative in ["paper/main.tex", "paper/Beyond_Seen_Mistakes.pdf", "paper/figures/composition_graph.png"]:
+for relative in ["paper/main.tex", "paper/Beyond_Seen_Mistakes.pdf", "paper/figures/composition_spaces.png"]:
     require((ROOT / relative).is_file(), f"missing release artifact: {relative}")
 
 print("Release verified: CPR-Coach 2,088 runs and frozen statistics; original 180-run grid, 144 random-v2 and 144 optimized-v3 matched pairs, 36 ST-GCN runs, frozen statistics, paper, and figures.")

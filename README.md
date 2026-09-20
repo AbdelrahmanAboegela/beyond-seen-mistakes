@@ -37,12 +37,9 @@ dataset (ALEX-GYM-1). The short version of what we found:
 If you're here for the code and data, skip to [Quick start](#quick-start). If
 you're here for the paper, it's [`paper/Beyond_Seen_Mistakes.pdf`](paper/Beyond_Seen_Mistakes.pdf).
 
-![Observed diagnosis spaces, with Hamming-distance-one edges and eligible held-out targets](paper/figures/composition_graph.png)
+![Observed diagnosis spaces of both datasets](paper/figures/composition_spaces.png)
 
-Each node is a naturally observed multi-error diagnosis, node area is frequency, and
-edges connect diagnoses that differ in one criterion. Filled nodes are the 12
-supported targets withheld one at a time. Every individual criterion state remains
-represented in training; the combination does not.
+Each node is a naturally observed multi-error diagnosis, node area is frequency, and edges connect diagnoses differing in one criterion. Filled nodes are the targets the frozen support rule retains and that are withheld one at a time — 12 on ALEX-GYM-1, 72 on CPR-Coach. Every individual criterion state remains represented in training; the combination does not.
 
 ## Why it matters
 

@@ -7,25 +7,25 @@
       "n_targets": 72,
       "seen_mean": 0.1571759259259259,
       "unseen_mean": 0.03917824074074074,
-      "seen_minus_unseen": 0.11799768518518519,
+      "seen_minus_unseen": 0.11799768522222223,
       "bootstrap95": [
-        0.09033564814814815,
-        0.14774305555555556
+        0.09033564815277778,
+        0.14774305561111112
       ],
       "wilcoxon_two_sided_approx": 4.741962868923369e-12,
       "targets_lower_when_absent": 62,
-      "targets_tied": 7,
-      "targets_higher_when_absent": 3
+      "targets_tied": 8,
+      "targets_higher_when_absent": 2
     },
     "bit_accuracy": {
       "metric": "bit_accuracy",
       "n_targets": 72,
       "seen_mean": 0.8627003205128205,
       "unseen_mean": 0.8237134971509972,
-      "seen_minus_unseen": 0.03898682336182336,
+      "seen_minus_unseen": 0.03898682333333334,
       "bootstrap95": [
-        0.032932581018518516,
-        0.04523693465099713
+        0.03293258097604167,
+        0.04523693463506941
       ],
       "wilcoxon_two_sided_approx": 5.005833435829032e-13,
       "targets_lower_when_absent": 69,
@@ -37,10 +37,10 @@
       "n_targets": 72,
       "seen_mean": 0.5739964679120976,
       "unseen_mean": 0.4490131876894602,
-      "seen_minus_unseen": 0.12498328022263744,
+      "seen_minus_unseen": 0.12498328019444443,
       "bootstrap95": [
-        0.10765373783059934,
-        0.1425509178240078
+        0.10765373780277777,
+        0.14255091778333331
       ],
       "wilcoxon_two_sided_approx": 2.523541830674953e-13,
       "targets_lower_when_absent": 70,
@@ -54,10 +54,10 @@
       "n_targets": 72,
       "seen_mean": 0.14305555555555557,
       "unseen_mean": 0.02523148148148148,
-      "seen_minus_unseen": 0.11782407407407408,
+      "seen_minus_unseen": 0.11782407411111112,
       "bootstrap95": [
-        0.07430555555555556,
-        0.16574074074074074
+        0.074305555596875,
+        0.16574074081944445
       ],
       "wilcoxon_two_sided_approx": 8.330231901471495e-07,
       "targets_lower_when_absent": 39,
@@ -69,10 +69,10 @@
       "n_targets": 72,
       "seen_mean": 0.16736111111111113,
       "unseen_mean": 0.04560185185185185,
-      "seen_minus_unseen": 0.12175925925925925,
+      "seen_minus_unseen": 0.12175925931944444,
       "bootstrap95": [
-        0.0863425925925926,
-        0.15833333333333333
+        0.08634259266666666,
+        0.15833333338888889
       ],
       "wilcoxon_two_sided_approx": 1.1942944511045366e-07,
       "targets_lower_when_absent": 46,
@@ -84,10 +84,10 @@
       "n_targets": 72,
       "seen_mean": 0.15671296296296297,
       "unseen_mean": 0.031018518518518518,
-      "seen_minus_unseen": 0.12569444444444444,
+      "seen_minus_unseen": 0.12569444447222222,
       "bootstrap95": [
-        0.09143518518518517,
-        0.16296296296296298
+        0.09143518522222222,
+        0.16296296300000002
       ],
       "wilcoxon_two_sided_approx": 7.935348304572236e-09,
       "targets_lower_when_absent": 49,
@@ -99,10 +99,10 @@
       "n_targets": 72,
       "seen_mean": 0.16157407407407406,
       "unseen_mean": 0.05486111111111111,
-      "seen_minus_unseen": 0.10671296296296295,
+      "seen_minus_unseen": 0.10671296297222223,
       "bootstrap95": [
-        0.07083333333333333,
-        0.14606481481481481
+        0.07083333334722222,
+        0.14606481480555555
       ],
       "wilcoxon_two_sided_approx": 2.8908832933848737e-07,
       "targets_lower_when_absent": 40,
@@ -115,10 +115,10 @@
     "n_targets": 72,
     "seen_mean": 0.02222222222222222,
     "unseen_mean": 0.003472222222222222,
-    "seen_minus_unseen": 0.01875,
+    "seen_minus_unseen": 0.01874999998611111,
     "bootstrap95": [
-      0.0,
-      0.04212962962962963
+      -1.927470528863119e-19,
+      0.04212962961111111
     ],
     "wilcoxon_two_sided_approx": 0.1230251939731705,
     "targets_lower_when_absent": 6,
@@ -131,9 +131,9 @@
       "n_targets": 72,
       "seen_mean": 0.3746527777777778,
       "unseen_mean": 0.10318287037037038,
-      "seen_minus_unseen": 0.2714699074074074,
+      "seen_minus_unseen": 0.27146990741666666,
       "bootstrap95": [
-        0.23362268518518517,
+        0.2336226851940972,
         0.3097222222222222
       ],
       "wilcoxon_two_sided_approx": 2.639787695853763e-13,
@@ -146,10 +146,10 @@
       "n_targets": 72,
       "seen_mean": 0.9190482549857548,
       "unseen_mean": 0.8724537037037038,
-      "seen_minus_unseen": 0.04659455128205129,
+      "seen_minus_unseen": 0.04659455123611111,
       "bootstrap95": [
-        0.040446937321937326,
-        0.05285345441595443
+        0.04044693727708334,
+        0.05285345441666667
       ],
       "wilcoxon_two_sided_approx": 2.2250642123081432e-13,
       "targets_lower_when_absent": 70,

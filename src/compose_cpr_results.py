@@ -48,7 +48,10 @@ def contrast(run_glob, metric, models=None, bootstrap=100000, seed=20260921):
     targets = sorted(t for t in per if {"seen", "unseen"} <= set(per[t]))
     seen = np.array([per[t]["seen"] for t in targets])
     unseen = np.array([per[t]["unseen"] for t in targets])
-    gap = seen - unseen
+    # Round before classifying direction. A target whose two conditions are
+    # genuinely identical can come out at -2.8e-17 from the nested averaging,
+    # which would be counted as a reversal rather than a tie.
+    gap = np.round(seen - unseen, 9)
     rng = np.random.default_rng(seed)
     draws = np.array([gap[rng.integers(0, len(gap), len(gap))].mean() for _ in range(bootstrap)])
     lo, hi = np.percentile(draws, [2.5, 97.5])

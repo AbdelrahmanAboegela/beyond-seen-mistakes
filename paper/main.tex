@@ -104,13 +104,14 @@ retained by the support rule.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=.98\textwidth]{figures/composition_graph.png}
-\caption{Naturally observed ALEX-GYM-1 diagnosis spaces; Fig.~\ref{fig:cpr}
-shows the same for CPR-Coach. Node area represents repetition
-frequency, filled nodes are the 12 targets retained by the final support rule,
-and edges join diagnoses differing in exactly one criterion. Lunge has no filled
-node because its candidate targets cannot preserve the required train/validation
-state support after recording-group removal.}
+\includegraphics[width=.99\textwidth]{figures/composition_spaces.png}
+\caption{Observed diagnosis spaces of both datasets, with the count each
+retains under the frozen support rule. ALEX-GYM-1's exercises project legibly
+under PCA; CPR-Coach's 88 compositions over 13 criteria do not, so they are
+drawn by cardinality, which is how their structure actually runs. Lunge retains
+no target because its candidates cannot preserve the required
+train/validation state support after recording-group removal, and CPR-Coach's
+triples and quadruples fail the same rule.}
 \label{fig:protocol}
 \end{figure*}
 
@@ -230,21 +231,9 @@ unobservable from the released skeletons. The recording group is the
 composition-pure class folder, of which every eligible composition has exactly
 three, matching the three-seed distinct-test-group rule.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=.92\columnwidth]{figures/cpr_composition_graph.png}
-\caption{CPR-Coach composition space, laid out by cardinality because 88
-compositions over 13 criteria do not project legibly. Node area is repetition
-frequency, filled nodes are the 72 compositions the support rule retains, and
-edges join diagnoses differing in one criterion. Every single and double error
-qualifies; the triples and quadruples have eight repetitions in one folder each
-and drop out, as lunge does on ALEX-GYM-1.}
-\label{fig:cpr}
-\end{figure}
-
 Applying the same frozen support rule yields 72 eligible compositions---13
 single-error and 59 double-error---from 1{,}414 repetitions, against 12 on
-ALEX-GYM-1 (Fig.~\ref{fig:cpr}). The larger pool also balances better: the optimized exchange cuts
+ALEX-GYM-1 (Fig.~\ref{fig:protocol}). The larger pool also balances better: the optimized exchange cuts
 the fold-mean worst-criterion mismatch from 10.78 to 3.71 counts, roughly three
 times smaller than is achievable on ALEX-GYM-1. Labels are sparser here (1.67
 positives of 13), so an all-zero predictor already scores 87.17\% bit accuracy
@@ -431,9 +420,16 @@ comparison deliberately uses the unmodified representation, so that it
 reproduces the pre-specified ALEX-GYM-1 protocol rather than a better one; the
 improved condition is reported separately in Sec.~\ref{sec:rate}. Removing the
 target composition lowers exact match from 15.72\% to 3.92\%, a gap of 11.80
-points (95\% CI $[9.03,14.77]$), with 62 of 72 compositions falling, 7 tied and
-3 reversed. The gap is positive for every backbone (12.57 Transformer, 12.18
+points (95\% CI $[9.03,14.77]$), with 62 of 72 compositions falling, 8 tied and
+2 reversed. The gap is positive for every backbone (12.57 Transformer, 12.18
 BiGRU, 11.78 TCN, 10.67 SSM).
+
+The residual-imbalance argument takes a different form here. The larger pool
+lets the exchange balance so well that the residual is both smaller and nearly
+uniform across targets (fold-mean worst-criterion mismatch 3.71 counts), so it
+has too little between-target variation to explain the gaps at all; its rank
+association with the gap is $+.044$ ($p=.71$). On ALEX-GYM-1, where the residual
+varies substantially, the same argument had to be made through the correlation.
 
 Two things matter more than the point estimate. The CPR-Coach estimate lies
 inside the ALEX-GYM-1 interval while being roughly six times narrower, so the
