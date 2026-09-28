@@ -96,3 +96,37 @@ def test_channels_are_appended_without_disturbing_the_pose():
 def test_row_count_mismatch_is_rejected():
     with pytest.raises(ValueError):
         append_constant_channels(np.zeros((3, 16, 5)), np.zeros((2, N_RATE_FEATURES)))
+
+
+def test_rate_scaler_is_fitted_on_training_rows_only():
+    """The scaler must not see held-out rows.
+
+    Fitting over the whole dataset moved a standardised channel by up to 0.30
+    of its own standard deviation on CPR-Coach, so this is a real leak rather
+    than a formality.
+    """
+    import numpy as np
+    from matched_composition import standardize_rate_block
+    rng = np.random.default_rng(0)
+    X = np.zeros((10, 4, 6), dtype=np.float32)
+    raw = rng.normal(size=(10, 3))
+    raw[8:] += 50.0                                   # held-out rows are extreme
+    X[:, :, 3:] = raw[:, None, :]
+    fit_rows = np.arange(8)
+    out = standardize_rate_block(X, 3, fit_rows)
+    # the fitted rows are centred; the held-out rows are not, and must not be
+    assert out[fit_rows][:, 0, 3:].mean(axis=0) == pytest.approx(np.zeros(3), abs=1e-5)
+    assert abs(out[8:][:, 0, 3:].mean()) > 5
+    assert out[:, :, :3] == pytest.approx(X[:, :, :3])   # pose block untouched
+
+
+def test_rate_scaler_is_identical_across_the_two_conditions():
+    """Both conditions must receive the same transform, or the match breaks."""
+    import numpy as np
+    from matched_composition import standardize_rate_block
+    X = np.zeros((6, 2, 5), dtype=np.float32)
+    X[:, :, 2:] = np.arange(18, dtype=np.float32).reshape(6, 1, 3)
+    fit = np.array([0, 1, 2, 3])
+    a = standardize_rate_block(X, 3, fit)
+    b = standardize_rate_block(X, 3, fit)
+    assert a == pytest.approx(b)

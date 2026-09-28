@@ -301,6 +301,16 @@ means all targets moved alike and cannot fall further. Exact
 match was fixed before both corrected reruns; the exchange optimization was
 specified before examining its model outcomes.
 
+The resampling analysis of Sec.~\ref{sec:rate} is exploratory and was not
+pre-specified. It began from a per-criterion inspection of results already in
+hand, so we report it as a post-hoc finding rather than a tested hypothesis.
+One guard applies: before running the ablation we fixed the prediction that
+rate-defined criteria would recover while postural ones would not, so that an
+across-the-board gain---which would indicate the added channels carried label
+information rather than rate---would have falsified it. Secondary endpoints and
+the architecture comparisons are likewise exploratory and uncorrected for
+multiplicity; only the exact-match contrast is confirmatory.
+
 \section{Results}
 \subsection{RQ1: matched removal exposes diagnosis dependence}
 Under optimized exchange and matched test recordings, target-present exact match
@@ -503,10 +513,10 @@ the two raw predictors.
 \label{sec:rate}
 Resampling every repetition to a fixed frame count normalizes the time axis and
 so discards execution-speed variability. That much is not a new observation:
-the normalization is standard in this domain \cite{turner2026markerless}, and
-the same operation is used deliberately as a skeleton augmentation precisely
-because it alters apparent speed. What appears not to have been quantified is
-the consequence when some criteria are \emph{defined} by the discarded
+normalizing each repetition onto a common time axis is standard practice in
+this domain \cite{turner2026markerless}, and the discarding follows directly
+from what the operation does. What appears not to have been quantified is the
+consequence when some criteria are \emph{defined} by the discarded
 quantity---``Slow Frequency'' and ``Insufficient Pressing'' cannot survive a
 transform under which a two-second and a six-second repetition become the same
 tensor.

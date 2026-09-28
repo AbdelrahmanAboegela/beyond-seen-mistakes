@@ -63,6 +63,26 @@ def fact_view_input(X, joints=26, coords=2, channels=CPR_FACT_CHANNELS):
     return np.concatenate([X[:, :, c*per:(c+1)*per] for c in channels], axis=-1)
 
 
+def standardize_rate_block(X, n_rate, fit_rows):
+    """Z-score the trailing rate channels using ``fit_rows`` only.
+
+    The loaders emit these channels raw. Fitting the scaler over the whole
+    dataset would use each fold's test rows: measured on CPR-Coach that moves a
+    standardised channel by up to 0.30 of its own standard deviation, which is
+    not small enough to wave through. ``fit_rows`` is the union of the two
+    conditions' training pools -- the same set the shared class weights come
+    from -- so the transform is identical in the present and absent conditions
+    and excludes validation and test.
+    """
+    X = np.asarray(X, dtype=np.float32).copy()
+    block = X[:, :, -n_rate:]
+    fit = block[fit_rows][:, 0, :]
+    mean = fit.mean(axis=0)
+    std = np.maximum(fit.std(axis=0), 1e-8)
+    X[:, :, -n_rate:] = (block - mean) / std
+    return X
+
+
 def state_counts(Y: np.ndarray, idx: np.ndarray) -> np.ndarray:
     return np.asarray([[(Y[idx, c] == s).sum() for s in (0, 1)] for c in range(Y.shape[1])])
 
@@ -285,6 +305,10 @@ def run(exercise, target, seed, model, data, epochs=55, manifest=None, with_rate
               "map_control": map_control,
               "split_audit": audit}
     common_union = np.union1d(seen, unseen)
+    if with_rate:
+        from temporal_features import N_RATE_FEATURES
+        n_channels = 4 if exercise == CPR_EXERCISE else 2
+        X = standardize_rate_block(X, N_RATE_FEATURES * n_channels, common_union)
     pos = Y[common_union].sum(0); neg = len(common_union) - pos
     shared_pos_weight = np.clip(neg / np.maximum(pos, 1), .25, 8)
     result["shared_pos_weight"] = shared_pos_weight.tolist()

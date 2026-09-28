@@ -1,8 +1,7 @@
 from pathlib import Path
 import json,numpy as np,pandas as pd
 
-from temporal_features import (N_RATE_FEATURES, append_constant_channels,
-                               rate_features, standardize)
+from temporal_features import N_RATE_FEATURES, append_constant_channels, rate_features
 
 PREPROCESS_VERSION = "alexgym-v2-interpolate-whole-frame-missing"
 
@@ -75,7 +74,8 @@ def load_exercise(root,exercise='squat',T=16,with_rate=False):
   keep.append(row_idx)
  df=df.iloc[keep].copy().reset_index(drop=True)
  X=np.stack(X)
- if with_rate: X=append_constant_channels(X,standardize(np.stack(rates)))
+ # Raw: the scaler is fitted on training rows only, in matched_composition.
+ if with_rate: X=append_constant_channels(X,np.stack(rates))
  Y=(df[CRITERIA[exercise]].fillna(0).to_numpy()<=0).astype(np.float32);co=np.array([''.join(map(str,r.astype(int))) for r in Y]);g=df['Num Video Frontal'].to_numpy()
  q=np.asarray(quality)
  df['_front_valid_fraction']=q[:,0];df['_lateral_valid_fraction']=q[:,1]

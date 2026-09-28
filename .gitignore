@@ -25,3 +25,4 @@ Thumbs.db
 build_page-*.png
 final_page-*.png
 balanced-*.png
+results/.*_leaky_backup/

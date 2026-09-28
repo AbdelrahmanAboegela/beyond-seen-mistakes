@@ -38,10 +38,9 @@ from pathlib import Path
 
 import numpy as np
 
-from temporal_features import (N_RATE_FEATURES, append_constant_channels,
-                               rate_features, standardize)
+from temporal_features import N_RATE_FEATURES, append_constant_channels, rate_features
 
-PREPROCESS_VERSION = "cpr-coach-v1-halpe26-4ch"
+PREPROCESS_VERSION = "cpr-coach-v2-halpe26-4ch"
 
 # Label 0 is the correct action; 1..13 are the error criteria, in ActionList order.
 CPR_ERRORS = [
@@ -228,13 +227,19 @@ def load_cpr(root, T=16, keypoint_files=DEFAULT_KEYPOINT_FILES, with_rate=False)
         keys.append(key)
 
     X = np.stack(X).astype(np.float32)
+    pose_dims = X.shape[-1]
     if with_rate:
-        X = append_constant_channels(X, standardize(np.stack(rates)))
+        # Raw here on purpose: standardising over the whole dataset would fit the
+        # scaler on each fold's test rows. matched_composition rescales the block
+        # from training rows only, once the split is known.
+        pose_dims = X.shape[-1]
+        X = append_constant_channels(X, np.stack(rates))
     Y = np.asarray(Y, dtype=np.float32)
     compositions = np.array(["".join(map(str, row.astype(int))) for row in Y])
     groups = np.asarray(groups)
     meta = {"preprocess_version": version, "criteria": CPR_ERRORS,
             "rate_features_per_channel": N_RATE_FEATURES if with_rate else 0,
+            "pose_dims": int(pose_dims) if with_rate else None,
             "channels": channel_names, "n_takes": len(keys), "dropped": dropped,
             "empty_channels": empty_channels,
             "body_joints": N_BODY_JOINTS, "keys": keys,
