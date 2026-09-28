@@ -96,9 +96,10 @@ We contribute (i) a data-audited observed-composition protocol, (ii) a
 controlled target-present/absent comparison, (iii) an external replication of
 both research questions on a second, independently collected composite-error
 dataset, (iv) evidence that a plausible local label diagnostic is subsumed by
-ordinary per-criterion class imbalance, and (v) the finding that fixed-length
-temporal resampling, a near-universal preprocessing step, silently removes the
-evidence for rate-defined criteria. Figure
+ordinary per-criterion class imbalance, and (v) a per-criterion diagnostic,
+accuracy against each criterion's own trivial baseline, which shows that the
+standard practice of resampling to a fixed frame count drives rate-defined
+criteria \emph{below} chance---a consequence aggregate metrics conceal. Figure
 \ref{fig:protocol} shows the naturally observed diagnosis spaces and targets
 retained by the support rule.
 
@@ -500,13 +501,25 @@ the two raw predictors.
 
 \subsection{Fixed-length resampling erases rate-defined criteria}
 \label{sec:rate}
-Resampling every repetition to 16 frames normalizes the time axis, which removes
-the quantity that criteria such as ``Slow Frequency'' or ``Insufficient
-Pressing'' are defined by: a two-second and a six-second repetition become the
-same tensor. Measured against each criterion's own trivial baseline on
-CPR-Coach, the four rate-defined criteria score 14.50 points \emph{below} it
-while the six postural criteria score 7.71 above---the models do worse than
-guessing exactly where the evidence has been deleted.
+Resampling every repetition to a fixed frame count normalizes the time axis and
+so discards execution-speed variability. That much is not a new observation:
+the normalization is standard in this domain \cite{turner2026markerless}, and
+the same operation is used deliberately as a skeleton augmentation precisely
+because it alters apparent speed. What appears not to have been quantified is
+the consequence when some criteria are \emph{defined} by the discarded
+quantity---``Slow Frequency'' and ``Insufficient Pressing'' cannot survive a
+transform under which a two-second and a six-second repetition become the same
+tensor.
+
+The consequence is severe and invisible to aggregate reporting. Measured against
+each criterion's own trivial baseline on CPR-Coach, the four rate-defined
+criteria score 14.50 points \emph{below} it while the six postural criteria
+score 7.71 above: the models do worse than guessing exactly where the evidence
+has been deleted. Pooled bit accuracy hides this completely, sitting at 86.27\%
+against an all-zero baseline of 87.17\%---unremarkable unless compared to the
+right reference. We therefore report per-criterion lift over each criterion's
+own baseline throughout; the same diagnostic is what identifies the three hand
+criteria as unobservable rather than merely difficult.
 
 Restoring three statistics computed before resampling---log duration, mean
 displacement per original frame, and the dominant non-DC frequency of the
@@ -635,6 +648,10 @@ data,'' \emph{IEEE Trans. Knowl. Data Eng.}, vol. 21, no. 9, 2009.
 
 \bibitem{cui2019classbalanced} Y. Cui \emph{et al.}, ``Class-balanced loss
 based on effective number of samples,'' in \emph{Proc. IEEE/CVF CVPR}, 2019.
+
+\bibitem{turner2026markerless} J. Turner, J. Clark, and N. Keshtmand,
+``Markerless pose estimation for resistance training technique assessment,''
+arXiv:2608.24384, 2026.
 
 \end{thebibliography}
 \end{document}
