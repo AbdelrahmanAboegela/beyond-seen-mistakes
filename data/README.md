@@ -37,3 +37,10 @@ Notes that differ from ALEX-GYM-1 and matter for interpretation:
 - Applying the frozen support rule (≥10 repetitions, ≥3 source groups, ≥8 training examples per criterion state) yields **72 eligible targets** — 13 single-error and 59 double-error compositions — from 1,416 repetitions. The 15 triple- and quadruple-error compositions have 8 repetitions in a single folder and are excluded, as lunge is in ALEX-GYM-1.
 - Folder names carry `S0`/`S1` session tags, but these are not verified participant identities either. The same recording-disjoint, **not** participant-disjoint caveat applies.
 
+## A note on temporal resolution
+
+ALEX-GYM-1's released pose arrays are **already resampled to exactly 16 frames** — every repetition, both views, all three exercises. CPR-Coach ships raw frame counts (158–1,155, mean 371).
+
+This matters for any criterion defined by a rate or duration. The pipeline's own `resample(..., T=16)` is therefore a no-op on ALEX-GYM-1, and the duration/speed/cadence features (`src/temporal_features.py`) are degenerate there — measured duration variance is exactly zero. They are informative on CPR-Coach and inert on ALEX-GYM-1 for that reason, not because squat and deadlift criteria are immune.
+
+Practical consequence: criteria such as `Slow reverse movement (0.5 point) L` or `Bend Hips and Knees Simultaniously (1) L` are being scored against a representation from which the defining evidence was removed before distribution. No downstream method can recover it from the public artifact; it would need the original video.

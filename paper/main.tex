@@ -538,12 +538,24 @@ lift while postural criteria move 0.67 and hand criteria $-0.56$, so the
 channels supply rate information rather than label information. Exact match rises
 from 15.72\% to 37.47\% and the composition gap from 11.80 to 27.15 points, with
 70 of 72 compositions falling; bit accuracy rises from 86.27\%, below the
-all-zero baseline, to 91.90\% above it. On ALEX-GYM-1 the same channels change
-nothing (gap 21.13 to 19.05 points, rate-worded criteria $-2.12$), which is
-consistent: squat and deadlift criteria are largely geometric, whereas chest
-compression is intrinsically a rate task. The defect is therefore severe for
-rate-defined criteria and immaterial for postural ones---a property of the
-annotation vocabulary, not of either dataset.
+all-zero baseline, to 91.90\% above it.
+
+On ALEX-GYM-1 the same channels change nothing, and the reason is not that its
+criteria are immune. Its released pose arrays are already resampled to exactly
+16 frames---every repetition, both views, all three exercises---whereas
+CPR-Coach ships raw counts from 158 to 1{,}155. The duration and cadence
+evidence was therefore removed before distribution, our resampling step is a
+no-op there, and the rate channels are degenerate by construction: measured
+duration variance is exactly zero. The null result records that, not a property
+of squat and deadlift.
+
+This sharpens rather than weakens the warning. Where raw frame counts survive
+the defect is measurable and repairable; where a release has normalized them
+away it is neither, and criteria such as ``Slow reverse movement'' or ``Bend
+Hips and Knees Simultaniously'' cannot be recovered from the public artifact by
+any downstream method. Consistent with that, the ALEX-GYM-1 criterion naming
+simultaneity sits 14.54 points below its own trivial baseline, and no
+intervention available to a user of that release can lift it.
 
 \section{Discussion}
 The matched comparison changes the evidential strength: target presence is
@@ -561,11 +573,13 @@ requiring no training run.
 
 The second dataset does more than widen coverage. It moves the primary test off
 its own floor, turns a same-signed result into a statistically compatible one,
-and---because its annotation vocabulary is rate-heavy where ALEX-GYM-1's is
-geometric---exposes a preprocessing defect that a single dataset of either kind
-would have hidden. That the same three channels are decisive on one dataset and
-inert on the other is itself the evidence that the defect tracks what a
-criterion measures rather than which corpus it came from.
+and exposes a preprocessing defect the first could not have revealed---not
+because ALEX-GYM-1 is immune, but because it ships pre-resampled, so the
+evidence needed to detect the problem is absent from the release. A study
+confined to that dataset could not have found this, and could not fix it if
+told. It is worth asking how many released pose corpora normalize duration away
+as a convenience, and how many criteria elsewhere are being scored against
+evidence their own distribution no longer contains.
 
 \section{Limitations}
 Two datasets is still not many, and both remain recording-disjoint rather than
